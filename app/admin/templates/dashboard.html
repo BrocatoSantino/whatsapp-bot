@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .header-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .date-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.5rem;
+    }
+
+    .badge-today {
+        background-color: var(--accent);
+        color: var(--bg-primary);
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        background-color: rgba(201, 169, 110, 0.1);
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+    }
+
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .appointments-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .appointment-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+    }
+
+    .appointment-info {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .appointment-time {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent);
+        min-width: 80px;
+    }
+
+    .appointment-details h3 {
+        font-size: 1.125rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .appointment-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .appointment-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background-color: var(--bg-card);
+        border-radius: 12px;
+        border: 1px dashed var(--border);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .status-cancelled {
+        opacity: 0.6;
+        text-decoration: line-through;
+    }
+
+    @media (max-width: 600px) {
+        .header-actions {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .appointment-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+        
+        .appointment-actions {
+            width: 100%;
+        }
+        
+        .appointment-actions button {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="header-actions">
+        <a href="/admin?fecha={{ prev_date.strftime('%Y-%m-%d') }}" class="btn btn-outline">← Anterior</a>
+        
+        <h1 class="date-title">
+            {{ fecha_format }}
+            {% if is_today %}
+            <span class="badge-today">HOY</span>
+            {% endif %}
+        </h1>
+        
+        <a href="/admin?fecha={{ next_date.strftime('%Y-%m-%d') }}" class="btn btn-outline">Siguiente →</a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+                <span class="stat-label">Turnos del día</span>
+                <span class="stat-value">{{ total_turnos }}</span>
+            </div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <span class="stat-label">Recaudación Estimada</span>
+                <span class="stat-value">${{ "{:,.0f}".format(recaudacion).replace(',', '.') }}</span>
+            </div>
+        </div>
+    </div>
+
+    <h2 style="margin-bottom: 1.5rem;">Turnos programados</h2>
+
+    {% if appointments %}
+    <div class="appointments-list">
+        {% for appt in appointments %}
+        <div class="card card-hover appointment-card {% if appt.status == 'cancelled' %}status-cancelled{% endif %}">
+            <div class="appointment-info">
+                <div class="appointment-time">
+                    {{ appt.time.strftime('%H:%M') }}
+                </div>
+                <div class="appointment-details">
+                    <h3>{{ appt.client.name if appt.client else 'Cliente Desconocido' }}</h3>
+                    <div class="appointment-meta">
+                        <span>📱 {{ appt.client.phone if appt.client else '-' }}</span>
+                        <span>💈 {{ appt.service.name if appt.service else 'Servicio Custom' }} ({{ appt.service.duration_minutes if appt.service else '30' }} min)</span>
+                    </div>
+                </div>
+            </div>
+            
+            {% if appt.status != 'cancelled' %}
+            <div class="appointment-actions">
+                <form action="/admin/cancelar/{{ appt.id }}" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres cancelar el turno de {{ appt.client.name if appt.client else 'este cliente' }}?');">
+                    <button type="submit" class="btn btn-danger">Cancelar Turno</button>
+                </form>
+            </div>
+            {% else %}
+            <div class="appointment-actions">
+                <span style="color: var(--danger); font-weight: 500; padding: 0.5rem 1rem; border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 8px;">Cancelado</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">🛋️</div>
+        <h3>No hay turnos para este día</h3>
+        <p>Aprovecha para descansar o tomar un café.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

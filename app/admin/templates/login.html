@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% set hide_navbar = True %}
+
+{% block title %}Iniciar Sesión | {{ business_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 4rem);
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        padding: 2.5rem 2rem;
+    }
+
+    .login-logo {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        display: inline-block;
+    }
+
+    .login-title {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+        font-size: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+        text-align: left;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .btn-login {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    .error-message {
+        background-color: rgba(248, 113, 113, 0.1);
+        color: var(--danger);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid rgba(248, 113, 113, 0.2);
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container fade-in">
+    <div class="card login-card">
+        <div class="login-logo">✂️</div>
+        <h1 class="login-title">{{ business_name }}</h1>
+        <p class="login-subtitle">Panel de administración</p>
+
+        {% if error %}
+        <div class="error-message">
+            <span>⚠️</span> Contraseña incorrecta. Intenta de nuevo.
+        </div>
+        {% endif %}
+
+        <form action="/admin/login" method="POST">
+            <div class="form-group">
+                <input type="password" id="password" name="password" placeholder="Contraseña de acceso" required autofocus>
+            </div>
+            <button type="submit" class="btn btn-primary btn-login">Ingresar al Panel</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
