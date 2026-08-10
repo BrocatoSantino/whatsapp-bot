@@ -8,8 +8,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Crear tablas al startup
-Base.metadata.create_all(bind=engine)
+# Crear tablas al startup (desactivado para Vercel)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="puerto.barberr Bot API",
