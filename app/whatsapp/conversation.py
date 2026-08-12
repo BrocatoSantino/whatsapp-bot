@@ -258,7 +258,7 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session):
         sections = [{"title": "Días disponibles", "rows": rows}]
         await send_list(
             phone,
-            f"📅 ¿Qué día te queda bien para tu corte?",
+            f"✂️ Valor del corte: *{price_fmt}*\n\n📅 ¿Qué día te queda bien?",
             "Ver días",
             sections
         )
