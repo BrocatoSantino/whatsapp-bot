@@ -101,6 +101,11 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
     try:
         msg = message.strip().lower()
 
+        # --- Manejo de audios/imágenes ---
+        if msg == "unsupported_media":
+            await send_message(phone, "Lo siento, soy un bot y todavía no sé escuchar audios ni ver fotos 😅\nPor favor, escribime por texto o escribí *menu*.")
+            return
+
         # --- Hablar con humano (funciona desde cualquier estado) ---
         if msg in HUMAN_KEYWORDS:
             await _handle_human_handoff(phone, name)

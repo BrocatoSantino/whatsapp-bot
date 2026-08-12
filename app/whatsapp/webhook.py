@@ -88,6 +88,8 @@ def parse_message(body: dict) -> dict | None:
                 text = interactive.get("button_reply", {}).get("id", "")
             elif int_type == "list_reply":
                 text = interactive.get("list_reply", {}).get("id", "")
+        elif msg_type in ["audio", "image", "video", "sticker", "document"]:
+            text = "UNSUPPORTED_MEDIA"
                 
         if phone and text:
             return {

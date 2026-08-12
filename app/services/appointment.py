@@ -1,6 +1,7 @@
 from datetime import date, time, datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models import Client, Appointment, Service
+from app.services.availability import get_available_slots
 
 def get_or_create_client(db: Session, phone: str, name: str = '') -> Client:
     """Busca un cliente por teléfono, lo crea si no existe. Actualiza el nombre si cambió."""
@@ -20,6 +21,11 @@ def create_appointment(db: Session, phone: str, name: str, service_id: int, apt_
     """Crea un nuevo turno para el cliente."""
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
+        return None
+        
+    # Doble chequeo de concurrencia: verificar si el turno sigue disponible
+    available_slots = get_available_slots(db, apt_date, service_id)
+    if apt_time not in available_slots:
         return None
         
     client = get_or_create_client(db, phone, name)
