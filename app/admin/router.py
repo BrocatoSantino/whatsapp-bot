@@ -31,7 +31,7 @@ async def login_get(request: Request, admin_session: str | None = Cookie(default
     if admin_session == get_session_token():
         return RedirectResponse(url="/admin", status_code=303)
     return templates.TemplateResponse(
-        request=request, name="login.html", context={"error": False, "business_name": BUSINESS_NAME}
+        request=request, name="login.html", context={"error": False, "business_name": BUSINESS_NAME, "hide_navbar": True}
     )
 
 @router.post("/admin/login", response_class=HTMLResponse)
@@ -49,7 +49,7 @@ async def login_post(request: Request, password: str = Form(...)):
         return response
     
     return templates.TemplateResponse(
-        request=request, name="login.html", context={"error": True, "business_name": BUSINESS_NAME}
+        request=request, name="login.html", context={"error": True, "business_name": BUSINESS_NAME, "hide_navbar": True}
     )
 
 @router.get("/admin/logout")
@@ -89,7 +89,7 @@ async def dashboard(
     appointments = []
     now = datetime.now()
     for app in raw_appointments:
-        if app.status in ['cancelled', 'no_show']:
+        if app.status in ['cancelled', 'no_show', 'completed']:
             continue
             
         if target_date == now.date():
