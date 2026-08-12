@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Form, Depends, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 import locale
 
 from app.config import ADMIN_PASSWORD, BUSINESS_NAME
@@ -63,6 +63,9 @@ async def logout():
 MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 
+# Zona horaria de Argentina (UTC-3)
+ar_tz = timezone(timedelta(hours=-3))
+
 @router.get("/admin", response_class=HTMLResponse)
 async def dashboard(
     request: Request, 
@@ -77,9 +80,9 @@ async def dashboard(
         try:
             target_date = datetime.strptime(fecha, "%Y-%m-%d").date()
         except ValueError:
-            target_date = date.today()
+            target_date = datetime.now(ar_tz).date()
     else:
-        target_date = date.today()
+        target_date = datetime.now(ar_tz).date()
 
     raw_appointments = get_appointments_by_date(db, target_date)
     
@@ -88,7 +91,7 @@ async def dashboard(
     
     # Filter appointments for the dashboard
     appointments = []
-    now = datetime.now()
+    now = datetime.now(ar_tz).replace(tzinfo=None)
     for app in raw_appointments:
         if app.status in ['cancelled', 'no_show', 'completed']:
             continue
@@ -106,7 +109,7 @@ async def dashboard(
     prev_date = target_date - timedelta(days=1)
     next_date = target_date + timedelta(days=1)
     
-    is_today = target_date == date.today()
+    is_today = target_date == datetime.now(ar_tz).date()
     
     fecha_format = f"{DIAS[target_date.weekday()]} {target_date.day} de {MESES[target_date.month - 1]} {target_date.year}"
 
@@ -160,15 +163,15 @@ async def historial(
         try:
             target_date = datetime.strptime(fecha, "%Y-%m-%d").date()
         except ValueError:
-            target_date = date.today()
+            target_date = datetime.now(ar_tz).date()
     else:
-        target_date = date.today()
+        target_date = datetime.now(ar_tz).date()
 
     appointments = get_appointments_by_date(db, target_date)
     
     prev_date = target_date - timedelta(days=1)
     next_date = target_date + timedelta(days=1)
-    is_today = target_date == date.today()
+    is_today = target_date == datetime.now(ar_tz).date()
     fecha_format = f"{DIAS[target_date.weekday()]} {target_date.day} de {MESES[target_date.month - 1]} {target_date.year}"
 
     return templates.TemplateResponse(

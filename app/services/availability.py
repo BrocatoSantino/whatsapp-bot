@@ -1,4 +1,4 @@
-from datetime import date, time, datetime, timedelta
+from datetime import date, time, datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models import Appointment, Service
 from app.config import BUSINESS_DAYS, BUSINESS_SHIFTS, SLOT_DURATION_MINUTES
@@ -6,7 +6,10 @@ from app.config import BUSINESS_DAYS, BUSINESS_SHIFTS, SLOT_DURATION_MINUTES
 def get_available_dates(days_ahead: int = 7) -> list[date]:
     """Retorna los próximos días hábiles basándose en BUSINESS_DAYS."""
     available_dates = []
-    current_date = date.today()
+    
+    # Hora local de Argentina (UTC-3)
+    ar_tz = timezone(timedelta(hours=-3))
+    current_date = datetime.now(ar_tz).date()
     
     while len(available_dates) < days_ahead:
         if current_date.weekday() in BUSINESS_DAYS:
@@ -47,7 +50,10 @@ def get_available_slots(db: Session, target_date: date, service_id: int) -> list
                 current += timedelta(minutes=SLOT_DURATION_MINUTES)
     
     available_slots = []
-    now = datetime.now()
+    
+    # Hora local de Argentina (UTC-3), y le sacamos la timezone para compararlo con current (naive)
+    ar_tz = timezone(timedelta(hours=-3))
+    now = datetime.now(ar_tz).replace(tzinfo=None)
     
     # Genera slots para cada turno (mañana y tarde)
     for shift in BUSINESS_SHIFTS:
