@@ -80,10 +80,27 @@ async def dashboard(
     else:
         target_date = date.today()
 
-    appointments = get_appointments_by_date(db, target_date)
+    raw_appointments = get_appointments_by_date(db, target_date)
     
+    # Calculate recaudacion using all non-cancelled appointments
+    recaudacion = sum(app.service.price for app in raw_appointments if app.service and app.status in ['confirmed', 'pending', 'completed'])
+    
+    # Filter appointments for the dashboard
+    appointments = []
+    now = datetime.now()
+    for app in raw_appointments:
+        if app.status in ['cancelled', 'no_show']:
+            continue
+            
+        if target_date == now.date():
+            # Hide if current time > appointment time + 30 mins
+            app_datetime = datetime.combine(target_date, app.time)
+            if now > app_datetime + timedelta(minutes=30):
+                continue
+                
+        appointments.append(app)
+        
     total_turnos = len(appointments)
-    recaudacion = sum(app.service.price for app in appointments if app.service and app.status != 'cancelled')
     
     prev_date = target_date - timedelta(days=1)
     next_date = target_date + timedelta(days=1)
@@ -127,3 +144,42 @@ async def update_appointment_status(
         db.commit()
     
     return RedirectResponse(url=f"/admin?fecha={appointment.date.strftime('%Y-%m-%d')}" if appointment else "/admin", status_code=303)
+
+@router.get("/admin/historial", response_class=HTMLResponse)
+async def historial(
+    request: Request, 
+    fecha: str | None = None,
+    db: Session = Depends(get_db),
+    is_authenticated: bool = Depends(get_admin_session)
+):
+    if not is_authenticated:
+        return RedirectResponse(url="/admin/login", status_code=303)
+    
+    if fecha:
+        try:
+            target_date = datetime.strptime(fecha, "%Y-%m-%d").date()
+        except ValueError:
+            target_date = date.today()
+    else:
+        target_date = date.today()
+
+    appointments = get_appointments_by_date(db, target_date)
+    
+    prev_date = target_date - timedelta(days=1)
+    next_date = target_date + timedelta(days=1)
+    is_today = target_date == date.today()
+    fecha_format = f"{DIAS[target_date.weekday()]} {target_date.day} de {MESES[target_date.month - 1]} {target_date.year}"
+
+    return templates.TemplateResponse(
+        request=request, 
+        name="historial.html", 
+        context={
+            "appointments": appointments,
+            "target_date": target_date,
+            "prev_date": prev_date,
+            "next_date": next_date,
+            "fecha_format": fecha_format,
+            "is_today": is_today,
+            "business_name": BUSINESS_NAME
+        }
+    )

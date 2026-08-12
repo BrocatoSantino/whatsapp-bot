@@ -67,10 +67,9 @@ def cancel_appointment(db: Session, appointment_id: int, phone: str) -> bool:
     return False
 
 def get_appointments_by_date(db: Session, target_date: date) -> list[Appointment]:
-    """Obtiene todos los turnos confirmados para una fecha específica."""
+    """Obtiene todos los turnos para una fecha específica (sin filtrar estado)."""
     return db.query(Appointment).filter(
-        Appointment.date == target_date,
-        Appointment.status == "confirmed"
+        Appointment.date == target_date
     ).order_by(Appointment.time).all()
 
 def get_all_services(db: Session) -> list[Service]:
