@@ -12,17 +12,23 @@ from app.services.appointment import get_appointments_by_date, cancel_appointmen
 
 router = APIRouter()
 import os
+import hashlib
 current_dir = os.path.dirname(os.path.realpath(__file__))
 templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
 
+def get_session_token():
+    # Genera un token único y seguro basado en la contraseña del admin.
+    # Así, nadie puede adivinar el valor de la cookie de sesión.
+    return hashlib.sha256(f"{ADMIN_PASSWORD}_barber_secret_salt".encode()).hexdigest()
+
 def get_admin_session(admin_session: str | None = Cookie(default=None)):
-    if admin_session != "authenticated":
+    if admin_session != get_session_token():
         return False
     return True
 
 @router.get("/admin/login", response_class=HTMLResponse)
 async def login_get(request: Request, admin_session: str | None = Cookie(default=None)):
-    if admin_session == "authenticated":
+    if admin_session == get_session_token():
         return RedirectResponse(url="/admin", status_code=303)
     return templates.TemplateResponse(
         request=request, name="login.html", context={"error": False, "business_name": BUSINESS_NAME}
@@ -32,7 +38,14 @@ async def login_get(request: Request, admin_session: str | None = Cookie(default
 async def login_post(request: Request, password: str = Form(...)):
     if password == ADMIN_PASSWORD:
         response = RedirectResponse(url="/admin", status_code=303)
-        response.set_cookie(key="admin_session", value="authenticated", httponly=True)
+        # Seguridad mejorada: HttpOnly, Secure (solo HTTPS), SameSite=strict
+        response.set_cookie(
+            key="admin_session", 
+            value=get_session_token(), 
+            httponly=True, 
+            secure=True, 
+            samesite="strict"
+        )
         return response
     
     return templates.TemplateResponse(

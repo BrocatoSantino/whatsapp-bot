@@ -2,28 +2,44 @@
 
 {% block extra_css %}
 <style>
-    .header-actions {
+    .date-navigator {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 2.5rem;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 3.5rem;
+        padding: 0.5rem;
+    }
+
+    .btn-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-nav:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
     }
 
     .date-title {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.25rem;
-        font-size: 1.5rem;
+        gap: 0.35rem;
+        font-size: 1.35rem;
         font-weight: 700;
-        letter-spacing: -0.03em;
+        letter-spacing: -0.02em;
         text-transform: capitalize;
-    }
-    
-    .date-title-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
+        min-width: 250px;
+        text-align: center;
     }
 
     .badge-today {
@@ -31,7 +47,7 @@
         color: var(--bg-primary);
         font-size: 0.7rem;
         font-weight: 800;
-        padding: 0.2rem 0.6rem;
+        padding: 0.25rem 0.6rem;
         border-radius: 9999px;
         letter-spacing: 0.5px;
         text-transform: uppercase;
@@ -209,18 +225,19 @@
     }
 
     @media (max-width: 768px) {
-        .header-actions {
-            flex-direction: row;
-            justify-content: space-between;
-            margin-bottom: 2rem;
+        .date-navigator {
+            gap: 0.75rem;
+            margin-bottom: 2.5rem;
         }
         
         .date-title {
-            font-size: 1.125rem;
+            font-size: 1.15rem;
+            min-width: auto;
         }
         
-        .btn-nav-icon {
-            padding: 0.6rem 1rem;
+        .btn-nav {
+            width: 36px;
+            height: 36px;
         }
         
         .appointment-card {
@@ -242,22 +259,20 @@
 
 {% block content %}
 <div class="fade-in">
-    <div class="header-actions">
-        <a href="/admin?fecha={{ prev_date.strftime('%Y-%m-%d') }}" class="btn btn-outline btn-nav-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <div class="date-navigator">
+        <a href="/admin?fecha={{ prev_date.strftime('%Y-%m-%d') }}" class="btn btn-nav">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </a>
         
         <div class="date-title">
-            <div class="date-title-wrapper">
-                {{ fecha_format }}
-                {% if is_today %}
-                <span class="badge-today">HOY</span>
-                {% endif %}
-            </div>
+            {{ fecha_format }}
+            {% if is_today %}
+            <span class="badge-today">HOY</span>
+            {% endif %}
         </div>
         
-        <a href="/admin?fecha={{ next_date.strftime('%Y-%m-%d') }}" class="btn btn-outline btn-nav-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        <a href="/admin?fecha={{ next_date.strftime('%Y-%m-%d') }}" class="btn btn-nav">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </a>
     </div>
 
