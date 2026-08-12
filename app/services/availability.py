@@ -29,7 +29,7 @@ def get_available_slots(db: Session, target_date: date, service_id: int) -> list
     # Obtiene turnos existentes (no cancelados, ni no-show)
     appointments = db.query(Appointment).filter(
         Appointment.date == target_date,
-        Appointment.status.in_(['pending', 'completed']) # cancelled y no_show liberan el turno
+        Appointment.status.in_(['confirmed', 'pending', 'completed']) # cancelled y no_show liberan el turno
     ).all()
     
     # Calcula slots ocupados
