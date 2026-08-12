@@ -16,3 +16,4 @@ BUSINESS_DAYS = [0, 1, 2, 3, 4, 5]  # Lunes a Sábado
 
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./peluqueria.db')
+OWNER_PHONE = os.getenv('OWNER_PHONE', '')
