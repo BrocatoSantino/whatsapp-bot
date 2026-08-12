@@ -348,30 +348,17 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
             f"Elegí otro día o escribí *menu* para volver.")
         return
 
-    # Armar filas de horarios
-    rows = []
+    # Armar texto con los horarios disponibles
     slots_data = []
+    msg_lines = [f"🕐 *Horarios para el {format_date(chosen_date)}*\n"]
+    
     for t in slots:
-        time_str = format_time(t)
-        rows.append({"id": f"time_{time_str}", "title": time_str})
+        msg_lines.append(f"• {format_time(t)}")
         slots_data.append(t.isoformat())
 
-    # Dividir en secciones si hay más de 10 horarios
-    if len(rows) <= 10:
-        sections = [{"title": "Horarios", "rows": rows}]
-    else:
-        morning = [r for r in rows if int(r["title"].split(":")[0]) < 13]
-        afternoon = [r for r in rows if int(r["title"].split(":")[0]) >= 13]
-        sections = []
-        if morning:
-            sections.append({"title": "☀️ Mañana", "rows": morning[:10]})
-        if afternoon:
-            sections.append({"title": "🌆 Tarde", "rows": afternoon[:10]})
+    msg_lines.append("\n📝 _Escribí la hora que querés (ej: 16:30 o 16)_")
 
-    body = (f"🕐 Horarios para el *{format_date(chosen_date)}*\n\n"
-            f"Tocá el botón para elegir, o escribí la hora directamente (ej: _16:30_)")
-
-    await send_list(phone, body, "Ver horarios", sections)
+    await send_message(phone, "\n".join(msg_lines))
 
     data = conv["data"].copy()
     data.update({
