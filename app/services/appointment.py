@@ -16,7 +16,7 @@ def get_or_create_client(db: Session, phone: str, name: str = '') -> Client:
         db.refresh(client)
     return client
 
-def create_appointment(db: Session, phone: str, name: str, service_id: int, apt_date: date, apt_time: time) -> Appointment | None:
+def create_appointment(db: Session, phone: str, name: str, service_id: int, apt_date: date, apt_time: time, status: str = "confirmed") -> Appointment | None:
     """Crea un nuevo turno para el cliente."""
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:
@@ -29,7 +29,7 @@ def create_appointment(db: Session, phone: str, name: str, service_id: int, apt_
         service_id=service_id,
         date=apt_date,
         time=apt_time,
-        status="confirmed"
+        status=status
     )
     db.add(appointment)
     db.commit()

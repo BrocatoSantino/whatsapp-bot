@@ -14,6 +14,8 @@ BUSINESS_HOURS_END = int(os.getenv('BUSINESS_HOURS_END', 20))
 SLOT_DURATION_MINUTES = int(os.getenv('SLOT_DURATION_MINUTES', 30))
 BUSINESS_DAYS = [0, 1, 2, 3, 4, 5]  # Lunes a Sábado
 
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+
 DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./peluqueria.db')
 OWNER_PHONE = os.getenv('OWNER_PHONE', '')
