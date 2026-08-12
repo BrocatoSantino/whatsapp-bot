@@ -2,6 +2,57 @@
 
 {% block extra_css %}
 <style>
+    .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    .bento-item {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .bento-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 250px;
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+
     .date-navigator {
         display: flex;
         flex-direction: row;
@@ -301,8 +352,150 @@
             align-items: flex-start;
             gap: 1.5rem;
         }
+        
+        .stat-value {
+            font-size: 2rem;
+        }
     }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Configuración general de Chart.js para Dark Mode
+    Chart.defaults.color = '#a1a1aa';
+    Chart.defaults.font.family = 'Inter, sans-serif';
+    
+    const labels = {{ labels | tojson }};
+    const turnosData = {{ turnos_data | tojson }};
+    const recaudacionData = {{ recaudacion_data | tojson }};
+
+    // Gráfico de Turnos (Barras)
+    const ctxTurnos = document.getElementById('turnosChart').getContext('2d');
+    new Chart(ctxTurnos, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cortes',
+                data: turnosData,
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: 8,
+                barThickness: 24
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 10, 10, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw + ' cortes';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                    ticks: { precision: 0 }
+                },
+                x: {
+                    grid: { display: false, drawBorder: false }
+                }
+            }
+        }
+    });
+
+    // Gráfico de Recaudación (Líneas / Barras)
+    const ctxRecaudacion = document.getElementById('recaudacionChart').getContext('2d');
+    
+    // Crear gradiente para el gráfico de recaudación
+    let gradient = ctxRecaudacion.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.5)'); // Verde success semi-transparente
+    gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+    
+    new Chart(ctxRecaudacion, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Recaudación ($)',
+                data: recaudacionData,
+                borderColor: '#10b981', // Verde success
+                backgroundColor: gradient,
+                borderWidth: 3,
+                tension: 0.4, // Curvas suaves
+                fill: true,
+                pointBackgroundColor: '#050505',
+                pointBorderColor: '#10b981',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10, 10, 10, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return '$' + context.raw.toLocaleString('es-AR');
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString('es-AR');
+                        }
+                    }
+                },
+                x: {
+                    grid: { display: false, drawBorder: false }
+                }
+            }
+        }
+    });
+
+    function openBottomSheet(id, name, time) {
+        document.getElementById('bottom-sheet').classList.add('active');
+        document.getElementById('sheet-overlay').classList.add('active');
+        document.getElementById('sheet-name').innerText = name;
+        document.getElementById('sheet-time').innerText = time;
+        document.body.style.overflow = 'hidden';
+        
+        document.getElementById('btn-completed').href = `/admin/appointment/${id}/status?status=completed&next=/admin/historial?fecha={{ target_date.strftime('%Y-%m-%d') }}`;
+        document.getElementById('btn-cancelled').href = `/admin/appointment/${id}/status?status=cancelled&next=/admin/historial?fecha={{ target_date.strftime('%Y-%m-%d') }}`;
+        document.getElementById('btn-no-show').href = `/admin/appointment/${id}/status?status=no_show&next=/admin/historial?fecha={{ target_date.strftime('%Y-%m-%d') }}`;
+        document.getElementById('btn-pending').href = `/admin/appointment/${id}/status?status=pending&next=/admin/historial?fecha={{ target_date.strftime('%Y-%m-%d') }}`;
+    }
+
+    function closeBottomSheet() {
+        document.getElementById('bottom-sheet').classList.remove('active');
+        document.getElementById('sheet-overlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+</script>
+
 {% endblock %}
 
 {% block content %}
@@ -318,9 +511,40 @@
         <a href="/admin/historial?fecha={{ next_date.strftime('%Y-%m-%d') }}" style="display: flex !important; align-items: center; justify-content: center; width: 44px; height: 44px; min-width: 44px; border-radius: 12px; background: rgba(255,255,255,0.05); color: #f5f5f5; border: 1px solid rgba(255,255,255,0.05); text-decoration: none; font-size: 1.25rem; font-weight: bold;">&rarr;</a>
     </div>
 
+    <!-- Weekly Stats Section -->
+    <div class="bento-grid">
+        <div class="card bento-item">
+            <div class="bento-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </div>
+            <div class="stat-label">Cortes en la Semana</div>
+            <div class="stat-value">{{ total_turnos_semana }}</div>
+        </div>
+        
+        <div class="card bento-item">
+            <div class="bento-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <div class="stat-label">Recaudación Semanal</div>
+            <div class="stat-value">${{ "{:,.0f}".format(total_recaudacion_semana).replace(',', '.') }}</div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2.5rem;">
+        <h3 style="margin-bottom: 1.5rem; text-align: center;">Cortes de la Semana</h3>
+        <div class="chart-container">
+            <canvas id="turnosChart"></canvas>
+        </div>
+        
+        <h3 style="margin-top: 2rem; margin-bottom: 1.5rem; text-align: center;">Recaudación de la Semana</h3>
+        <div class="chart-container">
+            <canvas id="recaudacionChart"></canvas>
+        </div>
+    </div>
+
     <h2 class="appointments-header">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-        Historial de Turnos
+        Historial Diario
     </h2>
 
     {% if appointments %}

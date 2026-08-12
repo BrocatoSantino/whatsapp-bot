@@ -171,6 +171,33 @@ async def historial(
     is_today = target_date == date.today()
     fecha_format = f"{DIAS[target_date.weekday()]} {target_date.day} de {MESES[target_date.month - 1]} {target_date.year}"
 
+    # --- Weekly Stats Logic ---
+    start_of_week = target_date - timedelta(days=target_date.weekday())
+    
+    labels = []
+    turnos_data = []
+    recaudacion_data = []
+    
+    total_turnos_semana = 0
+    total_recaudacion_semana = 0
+    
+    for i in range(7):
+        current_date = start_of_week + timedelta(days=i)
+        labels.append(f"{DIAS[current_date.weekday()][:3]} {current_date.day}")
+        
+        apps = get_appointments_by_date(db, current_date)
+        valid_apps = [a for a in apps if a.status in ['confirmed', 'pending', 'completed']]
+        
+        day_turnos = len(valid_apps)
+        day_recaudacion = sum(a.service.price for a in valid_apps if a.service)
+        
+        turnos_data.append(day_turnos)
+        recaudacion_data.append(day_recaudacion)
+        
+        total_turnos_semana += day_turnos
+        total_recaudacion_semana += day_recaudacion
+    # --------------------------
+
     return templates.TemplateResponse(
         request=request, 
         name="historial.html", 
@@ -181,6 +208,15 @@ async def historial(
             "next_date": next_date,
             "fecha_format": fecha_format,
             "is_today": is_today,
-            "business_name": BUSINESS_NAME
+            "business_name": BUSINESS_NAME,
+            "labels": labels,
+            "turnos_data": turnos_data,
+            "recaudacion_data": recaudacion_data,
+            "total_turnos_semana": total_turnos_semana,
+            "total_recaudacion_semana": total_recaudacion_semana,
+            "start_of_week": start_of_week.strftime("%d/%m"),
+            "end_of_week": (start_of_week + timedelta(days=6)).strftime("%d/%m")
         }
     )
+
+
