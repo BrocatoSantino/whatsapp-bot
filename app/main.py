@@ -22,9 +22,11 @@ app = FastAPI(
 app.include_router(webhook_router)
 app.include_router(admin_router)
 
+from fastapi.responses import RedirectResponse
+
 @app.get("/")
 async def root():
-    return {"message": "puerto.barberr Bot API está funcionando. Visita /admin para el panel de administración."}
+    return RedirectResponse(url="/admin", status_code=303)
 
 @app.get("/api/update-services")
 async def update_services(db: Session = Depends(get_db)):
