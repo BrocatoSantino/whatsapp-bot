@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ business_name }} — Panel Admin{% endblock %}</title>
+    <title>{% block title %}{{ business_name }} — Panel{% endblock %}</title>
+    <!-- Geist Font for Vercel-like sleekness -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-card: #1a1a28;
-            --bg-card-hover: #22222f;
-            --accent: #c9a96e;
-            --accent-light: #dfc08a;
-            --text-primary: #f0ede8;
-            --text-secondary: #8a8a9a;
-            --border: #2a2a3a;
-            --success: #4ade80;
-            --danger: #f87171;
-            --font-family: 'Inter', sans-serif;
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-card: #111111;
+            --bg-card-hover: #171717;
+            --accent: #ffffff;
+            --accent-light: #e5e5e5;
+            --text-primary: #ededed;
+            --text-secondary: #a1a1aa;
+            --border: #27272a;
+            --success: #34d399;
+            --danger: #ef4444;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         * {
@@ -31,15 +32,16 @@
             font-family: var(--font-family);
             background-color: var(--bg-primary);
             color: var(--text-primary);
-            line-height: 1.6;
+            line-height: 1.5;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            -webkit-font-smoothing: antialiased;
         }
 
         /* Navbar */
         .navbar {
-            background-color: var(--bg-secondary);
+            background-color: var(--bg-primary);
             border-bottom: 1px solid var(--border);
             padding: 1rem 0;
             position: sticky;
@@ -48,7 +50,7 @@
         }
 
         .navbar-content {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 0 1.5rem;
             display: flex;
@@ -58,16 +60,28 @@
 
         .navbar-brand {
             font-weight: 600;
-            font-size: 1.25rem;
+            font-size: 1.125rem;
             color: var(--text-primary);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            letter-spacing: -0.02em;
         }
 
         .navbar-brand span {
-            color: var(--accent);
+            color: var(--text-primary);
+        }
+        
+        .brand-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #c9a96e, #111);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
         }
 
         .navbar-logout {
@@ -79,14 +93,14 @@
         }
 
         .navbar-logout:hover {
-            color: var(--accent-light);
+            color: var(--text-primary);
         }
 
         /* Main Container */
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 2rem 1.5rem;
+            padding: 3rem 1.5rem;
             width: 100%;
             flex-grow: 1;
         }
@@ -96,6 +110,7 @@
             color: var(--text-primary);
             font-weight: 600;
             line-height: 1.2;
+            letter-spacing: -0.03em;
         }
 
         p {
@@ -106,9 +121,9 @@
         input {
             width: 100%;
             padding: 0.75rem 1rem;
-            background-color: var(--bg-secondary);
+            background-color: var(--bg-primary);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-primary);
             font-family: var(--font-family);
             font-size: 1rem;
@@ -117,8 +132,8 @@
 
         input:focus {
             outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.2);
+            border-color: var(--text-secondary);
+            box-shadow: 0 0 0 1px var(--text-secondary);
         }
 
         /* Buttons */
@@ -126,15 +141,15 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
             font-family: var(--font-family);
             font-weight: 500;
-            font-size: 1rem;
+            font-size: 0.875rem;
             cursor: pointer;
             transition: all 0.2s ease;
             text-decoration: none;
-            border: none;
+            border: 1px solid transparent;
         }
 
         .btn-primary {
@@ -145,36 +160,35 @@
 
         .btn-primary:hover {
             background-color: var(--accent-light);
-            transform: translateY(-1px);
+            transform: scale(0.98);
         }
         
         .btn-outline {
             background-color: transparent;
-            border: 1px solid var(--border);
+            border-color: var(--border);
             color: var(--text-primary);
         }
         
         .btn-outline:hover {
-            background-color: var(--bg-card);
+            background-color: var(--bg-secondary);
             border-color: var(--text-secondary);
         }
 
         .btn-danger {
-            background-color: rgba(248, 113, 113, 0.1);
+            background-color: transparent;
             color: var(--danger);
-            border: 1px solid rgba(248, 113, 113, 0.2);
+            border-color: var(--border);
         }
 
         .btn-danger:hover {
-            background-color: var(--danger);
-            color: #fff;
-            border-color: var(--danger);
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
         }
 
         /* Cards */
         .card {
             background-color: var(--bg-card);
-            border-radius: 12px;
+            border-radius: 8px;
             border: 1px solid var(--border);
             padding: 1.5rem;
             transition: all 0.2s ease;
@@ -182,8 +196,7 @@
 
         .card-hover:hover {
             background-color: var(--bg-card-hover);
-            border-color: rgba(201, 169, 110, 0.3);
-            transform: translateY(-2px);
+            border-color: #3f3f46;
         }
 
         /* Animations */
@@ -192,7 +205,7 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -204,7 +217,8 @@
     <nav class="navbar">
         <div class="navbar-content">
             <a href="/admin" class="navbar-brand">
-                ✂️ <span>{{ business_name }}</span> — panel
+                <div class="brand-logo">💈</div>
+                <span>{{ business_name }}</span>
             </a>
             <a href="/admin/logout" class="navbar-logout">Cerrar Sesión</a>
         </div>
