@@ -108,7 +108,12 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
         if msg in MENU_KEYWORDS:
             reset_conversation(phone)
 
-        # --- Acciones directas (botones de recordatorio) ---
+        # --- Acciones directas (botones de recordatorio / cancelar flujo) ---
+        if msg == "cancel_flow" or msg == "cancelar reserva":
+            await send_message(phone, "🚫 Reserva cancelada. Escribí *menu* si necesitás algo más.")
+            reset_conversation(phone)
+            return
+
         if msg.startswith("confirm_apt_"):
             await send_message(phone, "✅ ¡Genial! Te esperamos mañana. ¡Gracias por confirmar! 💈")
             reset_conversation(phone)
@@ -225,6 +230,10 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session):
             })
             services_data.append((s.id, s.name, price_fmt))
 
+        rows.append({
+            "id": "cancel_flow",
+            "title": "❌ Cancelar reserva"
+        })
         sections = [{"title": "Servicios", "rows": rows}]
         await send_list(phone, "✂️ ¿Qué servicio te hacés?", "Ver servicios", sections)
         update_conversation(phone, "CHOOSING_SERVICE", {"services": services_data})
@@ -329,6 +338,11 @@ async def _handle_choosing_service(phone: str, message: str, conv: dict, db: Ses
         })
         dates_data.append(d.isoformat())
 
+    rows.append({
+        "id": "cancel_flow",
+        "title": "❌ Cancelar reserva"
+    })
+
     sections = [{"title": "Días disponibles", "rows": rows}]
     await send_list(
         phone,
@@ -393,7 +407,8 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
 
     msg_lines.append("\n📝 _Escribí la hora que querés (ej: 16:30 o 16)_")
 
-    await send_message(phone, "\n".join(msg_lines))
+    buttons = [{"id": "cancel_flow", "title": "❌ Cancelar"}]
+    await send_reply_buttons(phone, "\n".join(msg_lines), buttons)
 
     data = conv["data"].copy()
     data.update({

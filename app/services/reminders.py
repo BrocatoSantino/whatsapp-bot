@@ -17,15 +17,22 @@ def format_time(t: datetime.time) -> str:
 async def send_tomorrow_reminders():
     db = SessionLocal()
     try:
-        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        now = datetime.datetime.now()
+        tomorrow = now.date() + datetime.timedelta(days=1)
         
-        # Buscar turnos para mañana que no estén cancelados
+        # Buscar turnos para mañana en la MISMA franja horaria actual
+        # Ej: Si el cron corre a las 14:00, busca turnos entre las 14:00 y las 14:59 de mañana
+        start_time = datetime.time(now.hour, 0)
+        end_time = datetime.time(now.hour, 59, 59)
+        
         appointments = db.query(Appointment).filter(
             Appointment.date == tomorrow,
+            Appointment.time >= start_time,
+            Appointment.time <= end_time,
             Appointment.status != 'cancelled'
         ).all()
         
-        logger.info(f"Enviando {len(appointments)} recordatorios para el {tomorrow}")
+        logger.info(f"Enviando {len(appointments)} recordatorios para {tomorrow} entre {start_time} y {end_time}")
         
         for apt in appointments:
             if not apt.client or not apt.client.phone:
