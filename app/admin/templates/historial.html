@@ -4,38 +4,28 @@
 <style>
     .date-navigator {
         display: flex;
-        justify-content: center;
+        flex-direction: row;
         align-items: center;
-        position: relative;
+        justify-content: center;
+        gap: 1.5rem;
         margin-bottom: 3.5rem;
-        width: 100%;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
     }
 
     .btn-nav {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
         width: 44px;
         height: 44px;
+        min-width: 44px;
         border-radius: 12px;
         background: rgba(255, 255, 255, 0.05);
         color: var(--text-primary);
-        transition: all 0.2s ease;
+        transition: background 0.2s ease;
         border: 1px solid rgba(255, 255, 255, 0.05);
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-    
-    .btn-nav.left {
-        left: 0;
-    }
-    
-    .btn-nav.right {
-        right: 0;
+        text-decoration: none;
+        font-size: 1.25rem;
+        font-weight: bold;
     }
 
     .btn-nav:hover {
@@ -43,19 +33,17 @@
     }
 
     .date-title {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.35rem;
         font-size: 1.35rem;
         font-weight: 700;
         letter-spacing: -0.02em;
         text-transform: capitalize;
         text-align: center;
-        padding: 0 4rem; /* Make room for absolute arrows */
+        white-space: nowrap;
     }
 
     .badge-today {
+        display: inline-block;
+        margin-left: 0.5rem;
         background-color: var(--text-primary);
         color: var(--bg-primary);
         font-size: 0.7rem;
@@ -320,20 +308,14 @@
 {% block content %}
 <div class="fade-in">
     <div class="date-navigator">
-        <a href="/admin/historial?fecha={{ prev_date.strftime('%Y-%m-%d') }}" class="btn btn-nav left" style="font-size: 1.25rem; font-weight: bold;">
-            &larr;
-        </a>
-        
+        <a href="/admin/historial?fecha={{ prev_date.strftime('%Y-%m-%d') }}" class="btn-nav">&larr;</a>
         <div class="date-title">
             {{ fecha_format }}
             {% if is_today %}
             <span class="badge-today">HOY</span>
             {% endif %}
         </div>
-        
-        <a href="/admin/historial?fecha={{ next_date.strftime('%Y-%m-%d') }}" class="btn btn-nav right" style="font-size: 1.25rem; font-weight: bold;">
-            &rarr;
-        </a>
+        <a href="/admin/historial?fecha={{ next_date.strftime('%Y-%m-%d') }}" class="btn-nav">&rarr;</a>
     </div>
 
     <h2 class="appointments-header">
