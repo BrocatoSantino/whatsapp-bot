@@ -28,8 +28,10 @@ from fastapi.responses import RedirectResponse
 
 # Configurar directorio estático
 static_dir = os.path.join(os.path.dirname(__file__), "admin", "static")
-os.makedirs(static_dir, exist_ok=True)
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# Vercel tiene un sistema de archivos de solo lectura. Solo montamos si el directorio existe.
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/")
 async def root():
