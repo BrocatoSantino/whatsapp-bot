@@ -5,11 +5,15 @@
 {% block extra_css %}
 <style>
     .login-wrapper {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: calc(100vh - 120px);
         padding: 1rem;
+        background-color: var(--bg-primary);
+        background-image: radial-gradient(circle at 50% 0%, rgba(30, 30, 30, 0.4) 0%, transparent 70%);
+        z-index: 1000;
     }
     
     .login-card {
@@ -84,7 +88,7 @@
 <div class="login-wrapper fade-in">
     <div class="card login-card">
         <div class="login-header">
-            <img src="/static/logo.jpg" alt="Logo" style="width: 64px; height: 64px; border-radius: 12px; margin: 0 auto 1.5rem; display: block; border: 1px solid var(--border); box-shadow: 0 8px 16px rgba(0,0,0,0.4);" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhOTZlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTE1IDJMMiAxNW0xNi04TDIgMjIiPjwvcGF0aD48Y2lyY2xlIGN4PSIyMCIgY3k9IjQiIHI9IjIiPjwvY2lyY2xlPjxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjIiPjwvY2lyY2xlPjwvc3ZnPg=='; this.style.padding='12px'; this.style.background='#111';">
+            <img src="/static/logo.svg" alt="Logo" style="width: 64px; height: 64px; border-radius: 12px; margin: 0 auto 1.5rem; display: block; border: 1px solid var(--border); box-shadow: 0 8px 16px rgba(0,0,0,0.4);" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhOTZlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTE1IDJMMiAxNW0xNi04TDIgMjIiPjwvcGF0aD48Y2lyY2xlIGN4PSIyMCIgY3k9IjQiIHI9IjIiPjwvY2lyY2xlPjxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjIiPjwvY2lyY2xlPjwvc3ZnPg=='; this.style.padding='12px'; this.style.background='#111';">
             <h1>Panel Exclusivo</h1>
             <p>Ingresá para gestionar la agenda</p>
         </div>

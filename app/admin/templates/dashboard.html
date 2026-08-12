@@ -308,8 +308,8 @@
 {% block content %}
 <div class="fade-in">
     <div class="date-navigator">
-        <a href="/admin?fecha={{ prev_date.strftime('%Y-%m-%d') }}" class="btn btn-nav">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <a href="/admin?fecha={{ prev_date.strftime('%Y-%m-%d') }}" class="btn btn-nav" style="font-size: 1.25rem; font-weight: bold;">
+            &larr;
         </a>
         
         <div class="date-title">
@@ -319,8 +319,8 @@
             {% endif %}
         </div>
         
-        <a href="/admin?fecha={{ next_date.strftime('%Y-%m-%d') }}" class="btn btn-nav">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        <a href="/admin?fecha={{ next_date.strftime('%Y-%m-%d') }}" class="btn btn-nav" style="font-size: 1.25rem; font-weight: bold;">
+            &rarr;
         </a>
     </div>
 
@@ -365,7 +365,7 @@
                         </span>
                         <span>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            {{ appt.service.name if appt.service else 'Servicio' }} ({{ appt.service.duration_minutes if appt.service else '30' }} min)
+                            {{ appt.service.name if appt.service else 'Servicio' }}
                         </span>
                     </div>
                 </div>
