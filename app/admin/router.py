@@ -97,9 +97,11 @@ async def dashboard(
             continue
             
         if target_date == now.date():
-            # Hide if current time > appointment time + 30 mins
+            # Auto-complete if current time > appointment time + 30 mins
             app_datetime = datetime.combine(target_date, app.time)
             if now > app_datetime + timedelta(minutes=30):
+                app.status = 'completed'
+                db.commit()
                 continue
                 
         appointments.append(app)
