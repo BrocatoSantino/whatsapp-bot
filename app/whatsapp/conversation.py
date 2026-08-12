@@ -108,6 +108,41 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
         if msg in MENU_KEYWORDS:
             reset_conversation(phone)
 
+        # --- Acciones directas (botones de recordatorio) ---
+        if msg.startswith("confirm_apt_"):
+            await send_message(phone, "✅ ¡Genial! Te esperamos mañana. ¡Gracias por confirmar! 💈")
+            reset_conversation(phone)
+            return
+
+        if msg.startswith("cancel_apt_"):
+            try:
+                apt_id = int(msg.split("_")[2])
+                success = cancel_appointment(db, apt_id, phone)
+                if success:
+                    await send_message(phone, "❌ Turno cancelado correctamente. ¡Gracias por avisar!")
+                else:
+                    await send_message(phone, "No pudimos cancelar el turno 😕 Escribí *menu*.")
+            except Exception:
+                pass
+            reset_conversation(phone)
+            return
+
+        if msg.startswith("reschedule_apt_"):
+            try:
+                apt_id = int(msg.split("_")[2])
+                success = cancel_appointment(db, apt_id, phone)
+                if success:
+                    await send_message(phone, "🔄 Ok, cancelamos el de mañana. Vamos a reprogramarlo:")
+                    update_conversation(phone, "MENU")
+                    await _handle_menu(phone, "sacar_turno", get_conversation(phone), db)
+                    return
+                else:
+                    await send_message(phone, "No pudimos reprogramar el turno 😕 Escribí *menu*.")
+            except Exception:
+                pass
+            reset_conversation(phone)
+            return
+
         conv = get_conversation(phone)
         state = conv["state"]
 

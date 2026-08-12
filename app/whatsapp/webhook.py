@@ -108,3 +108,15 @@ async def process_message(phone: str, name: str, text: str, message_id: str):
         logger.error(f"Error processing message for {phone}: {e}")
     finally:
         db.close()
+
+@router.get("/api/cron/reminders")
+async def trigger_reminders(background_tasks: BackgroundTasks):
+    from app.services.reminders import send_tomorrow_reminders
+    background_tasks.add_task(send_tomorrow_reminders)
+    return {"status": "reminders_queued"}
+
+@router.get("/api/cron/reengagement")
+async def trigger_reengagement(background_tasks: BackgroundTasks):
+    from app.services.reengagement import send_reengagement_messages
+    background_tasks.add_task(send_reengagement_messages)
+    return {"status": "reengagement_queued"}
