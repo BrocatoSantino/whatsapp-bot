@@ -22,7 +22,14 @@ app = FastAPI(
 app.include_router(webhook_router)
 app.include_router(admin_router)
 
+import os
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+
+# Configurar directorio estático
+static_dir = os.path.join(os.path.dirname(__file__), "admin", "static")
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/")
 async def root():

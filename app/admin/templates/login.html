@@ -1,70 +1,81 @@
 {% extends "base.html" %}
 
-{% set hide_navbar = True %}
-
-{% block title %}Iniciar Sesión | {{ business_name }}{% endblock %}
+{% block title %}Ingreso - {{ business_name }}{% endblock %}
 
 {% block extra_css %}
 <style>
-    .login-container {
+    .login-wrapper {
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: calc(100vh - 4rem);
+        min-height: calc(100vh - 120px);
+        padding: 1rem;
     }
-
+    
     .login-card {
         width: 100%;
-        max-width: 400px;
+        max-width: 420px;
+        padding: 3rem 2.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Subtle highlight on top of the card */
+    .login-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    }
+    
+    .login-header {
         text-align: center;
-        padding: 2.5rem 2rem;
+        margin-bottom: 2.5rem;
     }
-
-    .login-logo {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-        display: inline-block;
-    }
-
-    .login-title {
-        font-size: 1.75rem;
+    
+    .login-header h1 {
         margin-bottom: 0.5rem;
+        font-size: 1.75rem;
+        letter-spacing: -0.04em;
     }
-
-    .login-subtitle {
+    
+    .login-header p {
+        font-size: 0.95rem;
         color: var(--text-secondary);
-        margin-bottom: 2rem;
-        font-size: 1rem;
     }
-
+    
     .form-group {
         margin-bottom: 1.5rem;
-        text-align: left;
     }
-
+    
     .form-group label {
         display: block;
         margin-bottom: 0.5rem;
-        font-weight: 500;
         font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
     }
-
+    
     .btn-login {
         width: 100%;
-        margin-top: 0.5rem;
+        padding: 0.875rem;
+        font-size: 1rem;
+        margin-top: 1rem;
     }
-
-    .error-message {
-        background-color: rgba(248, 113, 113, 0.1);
+    
+    .error-msg {
+        background-color: rgba(239, 68, 68, 0.1);
         color: var(--danger);
-        padding: 0.75rem;
+        padding: 0.875rem;
         border-radius: 8px;
-        border: 1px solid rgba(248, 113, 113, 0.2);
-        border-radius: 6px;
         font-size: 0.875rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
         text-align: center;
         border: 1px solid rgba(239, 68, 68, 0.2);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.05);
     }
 </style>
 {% endblock %}
@@ -73,9 +84,9 @@
 <div class="login-wrapper fade-in">
     <div class="card login-card">
         <div class="login-header">
-            <div class="brand-logo" style="width: 48px; height: 48px; font-size: 20px; margin: 0 auto 1rem;">💈</div>
-            <h1>Panel de Control</h1>
-            <p>Ingresá para gestionar tus turnos</p>
+            <img src="/static/logo.jpg" alt="Logo" style="width: 64px; height: 64px; border-radius: 12px; margin: 0 auto 1.5rem; display: block; border: 1px solid var(--border); box-shadow: 0 8px 16px rgba(0,0,0,0.4);" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzlhOTZlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTE1IDJMMiAxNW0xNi04TDIgMjIiPjwvcGF0aD48Y2lyY2xlIGN4PSIyMCIgY3k9IjQiIHI9IjIiPjwvY2lyY2xlPjxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjIiPjwvY2lyY2xlPjwvc3ZnPg=='; this.style.padding='12px'; this.style.background='#111';">
+            <h1>Panel Exclusivo</h1>
+            <p>Ingresá para gestionar la agenda</p>
         </div>
         
         {% if error %}
