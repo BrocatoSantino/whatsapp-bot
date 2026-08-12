@@ -108,20 +108,22 @@ async def dashboard(
         }
     )
 
-@router.post("/admin/cancelar/{appointment_id}")
-async def cancel_appointment_admin(
+@router.post("/admin/estado/{appointment_id}")
+async def update_appointment_status(
     appointment_id: int, 
+    status: str = Form(...),
     db: Session = Depends(get_db),
     is_authenticated: bool = Depends(get_admin_session)
 ):
     if not is_authenticated:
         return RedirectResponse(url="/admin/login", status_code=303)
     
+    if status not in ['pending', 'completed', 'no_show', 'cancelled']:
+        return RedirectResponse(url="/admin", status_code=303)
+        
     appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
     if appointment:
-        appointment.status = 'cancelled'
+        appointment.status = status
         db.commit()
-        # Optionally, could use cancel_appointment(db, appointment_id, appointment.client.phone) 
-        # but the requirements explicitly say to change the DB directly.
     
-    return RedirectResponse(url="/admin", status_code=303)
+    return RedirectResponse(url=f"/admin?fecha={appointment.date.strftime('%Y-%m-%d')}" if appointment else "/admin", status_code=303)

@@ -9,9 +9,11 @@ WA_VERIFY_TOKEN = os.getenv('WA_VERIFY_TOKEN')
 WA_APP_SECRET = os.getenv('WA_APP_SECRET')
 
 BUSINESS_NAME = os.getenv('BUSINESS_NAME', 'puerto.barberr')
-BUSINESS_HOURS_START = int(os.getenv('BUSINESS_HOURS_START', 9))
-BUSINESS_HOURS_END = int(os.getenv('BUSINESS_HOURS_END', 20))
-SLOT_DURATION_MINUTES = int(os.getenv('SLOT_DURATION_MINUTES', 30))
+BUSINESS_SHIFTS = [
+    {"start": "09:30", "end": "12:30"},
+    {"start": "16:00", "end": "20:30"}
+]
+SLOT_DURATION_MINUTES = int(os.getenv('SLOT_DURATION_MINUTES', 45))
 BUSINESS_DAYS = [0, 1, 2, 3, 4, 5]  # Lunes a Sábado
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")

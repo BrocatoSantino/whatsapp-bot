@@ -133,95 +133,151 @@
         gap: 1rem;
     }
 
+    /* Smart Card Styles */
     .appointment-card {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 1.5rem;
         background: linear-gradient(145deg, rgba(20,20,20,0.8) 0%, rgba(10,10,10,0.9) 100%);
+        border-left: 4px solid var(--border);
+        cursor: pointer;
+        position: relative;
     }
 
-    .appointment-info {
-        display: flex;
-        align-items: center;
-        gap: 2rem;
+    .appointment-card:active {
+        transform: scale(0.98);
     }
 
-    .appointment-time {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        min-width: 75px;
-        font-variant-numeric: tabular-nums;
-        text-shadow: 0 0 20px rgba(255,255,255,0.1);
-    }
-
-    .appointment-details {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-    }
-
-    .appointment-details h3 {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #fff;
-    }
-
-    .appointment-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.25rem;
-        font-size: 0.875rem;
-        color: var(--text-secondary);
+    .status-completed {
+        border-left-color: var(--success);
+        opacity: 0.7;
     }
     
-    .appointment-meta span {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
+    .status-pending {
+        border-left-color: #3b82f6; /* Blue for pending/upcoming */
     }
 
-    .empty-state {
-        text-align: center;
-        padding: 5rem 2rem;
-        background-color: transparent;
-        border-radius: 16px;
-        border: 1px dashed rgba(255,255,255,0.1);
-    }
-
-    .empty-state-icon {
-        font-size: 2.5rem;
-        margin-bottom: 1.25rem;
+    .status-no_show {
+        border-left-color: #f59e0b; /* Orange for no-show */
         opacity: 0.5;
     }
-    
-    .empty-state h3 {
-        font-size: 1.25rem;
-        margin-bottom: 0.5rem;
-        color: var(--text-primary);
-    }
-    
+
     .status-cancelled {
+        border-left-color: var(--danger);
         opacity: 0.35;
         background: rgba(10,10,10,0.5);
     }
     
-    .status-cancelled .appointment-time {
+    .status-cancelled .appointment-time,
+    .status-no_show .appointment-time {
         text-decoration: line-through;
-        color: var(--danger);
+        color: var(--text-secondary);
     }
 
-    .badge-cancelled {
+    .badge-status {
         font-size: 0.75rem;
         padding: 0.35rem 0.75rem;
-        background-color: rgba(239, 68, 68, 0.1);
-        border: 1px solid rgba(239, 68, 68, 0.2);
-        color: var(--danger);
         border-radius: 6px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+    }
+    
+    .badge-completed { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+    .badge-no_show { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .badge-cancelled { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+    /* Bottom Sheet */
+    .bottom-sheet-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .bottom-sheet {
+        position: fixed;
+        bottom: -100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-card);
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+        padding: 2rem 1.5rem;
+        z-index: 1000;
+        transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        border-top: 1px solid var(--border);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .bottom-sheet.open {
+        bottom: 0;
+    }
+
+    .bottom-sheet-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .sheet-handle {
+        width: 40px;
+        height: 4px;
+        background: var(--border-hover);
+        border-radius: 4px;
+        margin: -1rem auto 1.5rem;
+    }
+
+    .sheet-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+
+    .sheet-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .sheet-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .btn-sheet {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-success {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.2);
     }
 
     @media (max-width: 768px) {
@@ -244,14 +300,6 @@
             flex-direction: column;
             align-items: flex-start;
             gap: 1.5rem;
-        }
-        
-        .appointment-actions {
-            width: 100%;
-        }
-        
-        .appointment-actions button {
-            width: 100%;
         }
     }
 </style>
@@ -302,7 +350,8 @@
     {% if appointments %}
     <div class="appointments-list">
         {% for appt in appointments %}
-        <div class="card card-hover appointment-card {% if appt.status == 'cancelled' %}status-cancelled{% endif %}">
+        <div class="card appointment-card status-{{ appt.status }}" 
+             onclick="openBottomSheet('{{ appt.id }}', '{{ appt.client.name if appt.client else 'Cliente Desconocido' }}', '{{ appt.time.strftime('%H:%M') }}')">
             <div class="appointment-info">
                 <div class="appointment-time">
                     {{ appt.time.strftime('%H:%M') }}
@@ -322,20 +371,15 @@
                 </div>
             </div>
             
-            {% if appt.status != 'cancelled' %}
             <div class="appointment-actions">
-                <form action="/admin/cancelar/{{ appt.id }}" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar este turno?');">
-                    <button type="submit" class="btn btn-danger">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        Cancelar
-                    </button>
-                </form>
+                {% if appt.status == 'completed' %}
+                <span class="badge-status badge-completed">Completado</span>
+                {% elif appt.status == 'no_show' %}
+                <span class="badge-status badge-no_show">No Asistió</span>
+                {% elif appt.status == 'cancelled' %}
+                <span class="badge-status badge-cancelled">Cancelado</span>
+                {% endif %}
             </div>
-            {% else %}
-            <div class="appointment-actions">
-                <span class="badge-cancelled">Cancelado</span>
-            </div>
-            {% endif %}
         </div>
         {% endfor %}
     </div>
@@ -349,4 +393,65 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Bottom Sheet UI -->
+<div class="bottom-sheet-overlay" id="bottomSheetOverlay" onclick="closeBottomSheet()"></div>
+<div class="bottom-sheet" id="bottomSheet">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title" id="sheetClientName">Cliente</h3>
+    <p class="sheet-subtitle" id="sheetTime">00:00</p>
+    
+    <div class="sheet-actions">
+        <form id="formCompleted" action="/admin/estado/0" method="POST">
+            <input type="hidden" name="status" value="completed">
+            <button type="submit" class="btn btn-sheet btn-success">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Marcar como Completado
+            </button>
+        </form>
+        
+        <form id="formNoShow" action="/admin/estado/0" method="POST">
+            <input type="hidden" name="status" value="no_show">
+            <button type="submit" class="btn btn-sheet btn-warning">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                Cliente No Asistió
+            </button>
+        </form>
+        
+        <form id="formCancel" action="/admin/estado/0" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar este turno?');">
+            <input type="hidden" name="status" value="cancelled">
+            <button type="submit" class="btn btn-sheet btn-danger" style="background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Cancelar Turno
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openBottomSheet(id, clientName, time) {
+        // Solo abrir si no está cancelado/completado/no_show, o si queremos permitir editarlos.
+        // Por ahora permitimos re-editar cualquier turno.
+        
+        document.getElementById('sheetClientName').textContent = clientName;
+        document.getElementById('sheetTime').textContent = time;
+        
+        // Update form actions
+        document.getElementById('formCompleted').action = `/admin/estado/${id}`;
+        document.getElementById('formNoShow').action = `/admin/estado/${id}`;
+        document.getElementById('formCancel').action = `/admin/estado/${id}`;
+        
+        // Show sheet
+        document.getElementById('bottomSheetOverlay').classList.add('open');
+        document.getElementById('bottomSheet').classList.add('open');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+    
+    function closeBottomSheet() {
+        document.getElementById('bottomSheetOverlay').classList.remove('open');
+        document.getElementById('bottomSheet').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+</script>
+
 {% endblock %}
