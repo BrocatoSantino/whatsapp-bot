@@ -1,17 +1,29 @@
-# ✂️ puerto.barberr — Bot de WhatsApp
+# ✂️ puerto.barberr — WhatsApp Booking Bot (SaaS)
 
-Este proyecto es un bot automatizado para WhatsApp diseñado para gestionar los turnos de la barbería **puerto.barberr**. Permite a los clientes agendar, consultar y cancelar turnos directamente desde WhatsApp, y provee un panel de administración web elegante para gestionar los turnos del día.
+Este proyecto es un sistema integral de reservas automatizado vía WhatsApp, diseñado específicamente para **puerto.barberr**. Funciona como un **SaaS (Software as a Service)** completo, permitiendo a los clientes autogestionar sus turnos 24/7 y ofreciendo al dueño un panel de administración premium para controlar su negocio.
+
+## ✨ Características Principales
+
+*   🤖 **Bot de WhatsApp Inteligente:** Flujo conversacional optimizado usando la API Oficial de Meta Cloud. Soporta menús interactivos, botones rápidos y manejo de errores (ej. audios no soportados).
+*   📱 **Panel Admin (PWA):** Dashboard de diseño premium ("Glassmorphism"). Instalable en el celular (Progressive Web App) para uso nativo.
+*   🔒 **Prevención de Doble Reserva:** Control de concurrencia estricto en la base de datos para evitar turnos superpuestos.
+*   ⏰ **Timezone-Aware:** Todo el motor de reservas funciona anclado a la zona horaria UTC-3 (Argentina), haciéndolo invulnerable a los desfasajes horarios de servidores cloud internacionales.
+*   🔔 **Recordatorios Automáticos (Cron):** Envío automático de recordatorios por WhatsApp un día antes del turno.
+*   🔄 **Campañas de Reactivación:** El bot detecta clientes que no asisten hace 30 días y les envía un mensaje para incentivarlos a volver.
+*   ☁️ **Cloud Native:** Arquitectura Serverless pensada para desplegarse en Vercel (Backend) y Supabase (Base de Datos PostgreSQL).
 
 ## 📋 Requisitos
 
-- Python 3.10+
-- Cuenta Meta Business (gratis, para usar la API de WhatsApp Cloud)
-- [ngrok](https://ngrok.com/) para exponer el servidor local durante el desarrollo
+*   Python 3.10+
+*   Cuenta de **Meta Business** (para obtener tokens de WhatsApp).
+*   Cuenta de **Supabase** (para la base de datos PostgreSQL en producción).
+*   Cuenta de **Vercel** (para hosting).
 
-## 🚀 Instalación
+## 🚀 Instalación Local
 
 1. Clona el repositorio y navega al directorio:
 ```bash
+git clone <repo-url>
 cd whatsapp-peluqueria
 ```
 
@@ -27,73 +39,70 @@ pip install -r requirements.txt
 ```
 
 4. Configura las variables de entorno:
+Copia el `.env.example` a `.env` y llena los datos:
 ```bash
-cp .env.example .env
+# Meta / WhatsApp Cloud API
+WA_VERIFY_TOKEN=tu_token_secreto_a_eleccion
+WA_ACCESS_TOKEN=tu_token_de_meta
+WA_PHONE_NUMBER_ID=tu_phone_id
+WA_APP_SECRET=tu_app_secret
+
+# Base de Datos (URL de Supabase o SQLite local)
+DATABASE_URL=postgresql://user:pass@host:5432/postgres
+
+# Panel Admin
+ADMIN_PASSWORD=tu_contraseña_segura
 ```
-*(Edita el archivo `.env` con tus tokens reales de Meta y otras configuraciones)*
 
 ## ⚙️ Configurar Meta WhatsApp
 
-Para que el bot se comunique con WhatsApp, sigue estos pasos:
-
 1. Ve a [developers.facebook.com](https://developers.facebook.com/).
-2. Crea una nueva App seleccionando el tipo **Business**.
-3. Agrega el producto **WhatsApp** a tu aplicación.
-4. En el panel de WhatsApp, obtén tu **Phone Number ID** y el **Access Token** de prueba.
-5. Agrega tu número de teléfono personal a la lista de números de prueba en Meta.
-6. Copia los tokens en tu archivo `.env`.
+2. Crea una App tipo **Business** y agrega el producto **WhatsApp**.
+3. Obtén tu **Phone Number ID** y el **Access Token**.
+4. Configura el **Webhook** en Meta apuntando a `https://tu-dominio.vercel.app/webhook` (o usa `ngrok` para desarrollo local).
 
-## 🗄️ Inicializar DB
+## ▶️ Ejecutar en Desarrollo
 
-Antes de arrancar, inicializa la base de datos sqlite y precarga servicios si es necesario:
-
-```bash
-python setup_db.py
-```
-*(Este comando asume que tienes un script setup_db.py. Si no, la DB se crea automáticamente al iniciar la app con `app/main.py`)*
-
-## ▶️ Ejecutar
-
-Inicia el servidor de desarrollo de FastAPI:
-
+Inicia el servidor local de FastAPI:
 ```bash
 uvicorn app.main:app --reload
 ```
 El servidor estará corriendo en `http://localhost:8000`.
 
-## 🌐 Configurar Webhook (desarrollo)
+## ☁️ Despliegue en Producción (Vercel)
 
-Para que Meta pueda enviar mensajes a tu servidor local, necesitas exponerlo a internet:
+El proyecto incluye el archivo `vercel.json` listo para Serverless Functions.
 
-```bash
-ngrok http 8000
-```
-Copia la URL `https` que te da ngrok (ej: `https://xxxx.ngrok-free.app`), añádele `/webhook` y configúrala en el Dashboard de Meta WhatsApp junto con tu token de verificación (definido en `.env`).
+1. Instala el Vercel CLI o vincula tu repositorio de GitHub directamente en el dashboard de Vercel.
+2. Agrega todas las variables del `.env` en la sección **Environment Variables** de tu proyecto en Vercel.
+3. Despliega la aplicación.
+
+### Configurar Tareas Automáticas (Cron Jobs)
+Para que los recordatorios y las campañas de reactivación funcionen, debes usar un servicio de Cron externo (como [cron-job.org](https://cron-job.org) o Vercel Cron) que haga una petición GET a las siguientes rutas todos los días a las 10:00 AM:
+*   `https://tu-dominio.vercel.app/api/cron/reminders`
+*   `https://tu-dominio.vercel.app/api/cron/reengagement`
 
 ## 👑 Panel Admin
 
-El proyecto incluye un elegante panel de administración para ver los turnos del día y la recaudación estimada.
-
-Accede a: `http://localhost:8000/admin`  
-**Password default:** `admin123`
+Accede a: `https://tu-dominio.vercel.app/admin`
+*Desde un celular, abre el menú del navegador y selecciona "Agregar a la pantalla principal" para usarlo como aplicación.*
 
 ## 📁 Estructura del proyecto
 
 ```text
 whatsapp-peluqueria/
 ├── app/
-│   ├── admin/
-│   │   ├── templates/     # Interfaces del panel web
-│   │   └── router.py      # Rutas del panel admin
-│   ├── services/          # Lógica de negocio (turnos, clientes)
-│   ├── whatsapp/          # Lógica del bot (webhook, envío de msjs)
-│   ├── config.py          # Configuración y variables de entorno
-│   ├── database.py        # Conexión a la base de datos
-│   ├── models.py          # Modelos SQLAlchemy
-│   └── main.py            # Punto de entrada de FastAPI
+│   ├── admin/             # Panel web (Rutas y Templates)
+│   ├── services/          # Lógica de negocio (Citas, Disponibilidad, Cron)
+│   ├── whatsapp/          # Lógica del bot (Webhook, Estado conversacional)
+│   ├── config.py          # Configuración global
+│   ├── database.py        # Motor SQLAlchemy
+│   ├── models.py          # Modelos de BD (Cliente, Turno, Servicio)
+│   └── main.py            # Instancia de FastAPI
+├── vercel.json            # Configuración Serverless
 ├── requirements.txt       # Dependencias
 └── README.md              # Documentación
 ```
 
 ---
-*Hecho con dedicación para puerto.barberr* 💈
+*Diseñado para ser un producto escalable (SaaS).* 💈
