@@ -44,7 +44,8 @@ async def login_post(request: Request, password: str = Form(...)):
             value=get_session_token(), 
             httponly=True, 
             secure=True, 
-            samesite="strict"
+            samesite="strict",
+            max_age=31536000 # 1 año de duración para no tener que loguearse a cada rato
         )
         return response
     
