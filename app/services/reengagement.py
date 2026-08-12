@@ -12,7 +12,8 @@ async def send_reengagement_messages():
     db = SessionLocal()
     try:
         # Calcular fecha límite: hace 30 días
-        thirty_days_ago = datetime.date.today() - datetime.timedelta(days=30)
+        ar_tz = datetime.timezone(datetime.timedelta(hours=-3))
+        thirty_days_ago = datetime.datetime.now(ar_tz).date() - datetime.timedelta(days=30)
         
         # Encontrar clientes cuyo ÚLTIMO turno (sin importar estado) fue hace 30 días exactos.
         # Esto evita mandar el mensaje todos los días después de los 30 días.

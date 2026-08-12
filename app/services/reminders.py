@@ -17,7 +17,8 @@ def format_time(t: datetime.time) -> str:
 async def send_tomorrow_reminders():
     db = SessionLocal()
     try:
-        now = datetime.datetime.now()
+        ar_tz = datetime.timezone(datetime.timedelta(hours=-3))
+        now = datetime.datetime.now(ar_tz)
         tomorrow = now.date() + datetime.timedelta(days=1)
         
         # Buscar TODOS los turnos de mañana (ya que Vercel Hobby solo permite cron diario)

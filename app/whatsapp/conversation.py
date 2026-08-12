@@ -13,6 +13,8 @@ from app.services.appointment import (
 from app.services.availability import get_available_dates, get_available_slots
 from app.config import OWNER_PHONE, BUSINESS_NAME
 
+ar_tz = datetime.timezone(datetime.timedelta(hours=-3))
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -63,7 +65,7 @@ def parse_user_time(text: str) -> datetime.time | None:
 # ---------------------------------------------------------------------------
 
 def get_conversation(phone: str) -> dict:
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(ar_tz).replace(tzinfo=None)
     if phone in conversations:
         conv = conversations[phone]
         # Timeout de 10 minutos sin actividad
@@ -83,13 +85,13 @@ def update_conversation(phone: str, state: str, data: dict = None):
         conversations[phone]["state"] = state
         if data is not None:
             conversations[phone]["data"] = data
-        conversations[phone]["last_activity"] = datetime.datetime.now()
+        conversations[phone]["last_activity"] = datetime.datetime.now(ar_tz).replace(tzinfo=None)
 
 def reset_conversation(phone: str):
     if phone in conversations:
         conversations[phone]["state"] = "IDLE"
         conversations[phone]["data"] = {}
-        conversations[phone]["last_activity"] = datetime.datetime.now()
+        conversations[phone]["last_activity"] = datetime.datetime.now(ar_tz).replace(tzinfo=None)
 
 # ---------------------------------------------------------------------------
 # Handler principal
@@ -230,7 +232,7 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session):
             reset_conversation(phone)
             return
 
-        today = datetime.date.today()
+        today = datetime.datetime.now(ar_tz).date()
         tomorrow = today + datetime.timedelta(days=1)
 
         rows = []

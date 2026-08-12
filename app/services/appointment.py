@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, time, datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models import Client, Appointment, Service
 
@@ -42,7 +42,8 @@ def get_client_appointments(db: Session, phone: str) -> list[Appointment]:
     if not client:
         return []
         
-    today = date.today()
+    ar_tz = timezone(timedelta(hours=-3))
+    today = datetime.now(ar_tz).date()
     return db.query(Appointment).filter(
         Appointment.client_id == client.id,
         Appointment.status == "confirmed",
