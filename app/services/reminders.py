@@ -30,13 +30,14 @@ async def send_tomorrow_reminders():
         logger.info(f"Enviando {len(appointments)} recordatorios para {tomorrow}")
         
         for apt in appointments:
-            if not apt.client or not apt.client.phone:
+            if not apt.client or not apt.client.phone or not apt.tenant:
                 continue
                 
             service_name = apt.service.name if apt.service else "tu turno"
             phone = apt.client.phone
+            tenant = apt.tenant
             
-            body = (f"⏰ *Recordatorio de puerto.barberr*\n\n"
+            body = (f"⏰ *Recordatorio de {tenant.name}*\n\n"
                     f"¡Hola! Te recordamos tu turno para mañana:\n"
                     f"📅 {format_date(apt.date)}\n"
                     f"🕐 {format_time(apt.time)}\n"
@@ -50,8 +51,8 @@ async def send_tomorrow_reminders():
             ]
             
             try:
-                await send_reply_buttons(phone, body, buttons)
-                logger.info(f"Recordatorio enviado a {phone} para turno {apt.id}")
+                await send_reply_buttons(phone, body, buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
+                logger.info(f"Recordatorio enviado a {phone} para turno {apt.id} ({tenant.name})")
             except Exception as e:
                 logger.error(f"Error enviando recordatorio a {phone}: {e}")
                 

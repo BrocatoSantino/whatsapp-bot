@@ -34,12 +34,13 @@ async def send_reengagement_messages():
         logger.info(f"Enviando mensajes de reactivación a {len(clients_to_reengage)} clientes (último turno: {thirty_days_ago})")
         
         for client in clients_to_reengage:
-            if not client.phone:
+            if not client.phone or not client.tenant:
                 continue
                 
             name = client.name if client.name else "campeón"
+            tenant = client.tenant
             
-            body = (f"👋 ¡Ey {name}! Hace rato que no te vemos por *puerto.barberr* 💈\n\n"
+            body = (f"👋 ¡Ey {name}! Hace rato que no te vemos por *{tenant.name}* 💈\n\n"
                     f"Ya pasaron algunas semanas desde tu último corte. ¿Querés ir separando un lugar para estos días?")
             
             buttons = [
@@ -48,8 +49,8 @@ async def send_reengagement_messages():
             ]
             
             try:
-                await send_reply_buttons(client.phone, body, buttons)
-                logger.info(f"Mensaje de reactivación enviado a {client.phone}")
+                await send_reply_buttons(client.phone, body, buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
+                logger.info(f"Mensaje de reactivación enviado a {client.phone} ({tenant.name})")
             except Exception as e:
                 logger.error(f"Error enviando reactivación a {client.phone}: {e}")
                 

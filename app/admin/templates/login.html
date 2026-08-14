@@ -95,13 +95,17 @@
         </div>
         
         {% if error %}
-        <div class="error-msg">Contraseña incorrecta. Intenta nuevamente.</div>
+        <div class="error-msg">Usuario o contraseña incorrecta. Intenta nuevamente.</div>
         {% endif %}
         
         <form action="/admin/login" method="POST">
             <div class="form-group">
+                <label for="username">Usuario de la Empresa</label>
+                <input type="text" id="username" name="username" required autofocus placeholder="Ej. la_barberia">
+            </div>
+            <div class="form-group">
                 <label for="password">Contraseña de acceso</label>
-                <input type="password" id="password" name="password" required autofocus placeholder="••••••••">
+                <input type="password" id="password" name="password" required placeholder="••••••••">
             </div>
             
             <button type="submit" class="btn btn-primary btn-login">Ingresar al panel</button>

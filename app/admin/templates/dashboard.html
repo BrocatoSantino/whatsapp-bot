@@ -301,6 +301,47 @@
             align-items: flex-start;
             gap: 1.5rem;
         }
+
+        .bento-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+        }
+
+        .card.bento-item {
+            padding: 0.5rem 0 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            flex: 1;
+            overflow: visible !important;
+        }
+        
+        .card.bento-item::after {
+            display: none !important;
+        }
+
+        .card.bento-item .bento-icon {
+            display: none !important;
+        }
+
+        .card.bento-item .stat-label {
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+            color: var(--text-secondary);
+        }
+
+        .card.bento-item .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
     }
 </style>
 {% endblock %}

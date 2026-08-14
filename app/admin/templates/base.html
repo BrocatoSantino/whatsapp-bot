@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#050505">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Puerto">
+    <meta name="apple-mobile-web-app-title" content="TurnosPro">
     <link rel="apple-touch-icon" href="/static/logo.PNG">
     
     <title>{% block title %}{{ business_name }} — Panel{% endblock %}</title>
@@ -72,6 +72,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .navbar-brand {
@@ -247,12 +249,12 @@
     <nav class="navbar">
         <div class="navbar-content">
             <a href="/admin" class="navbar-brand">
-                <img src="/static/logo.PNG" class="brand-logo-img" alt="Logo" style="object-fit: cover;">
                 <span>{{ business_name }}</span>
             </a>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <a href="/admin" class="navbar-logout">Inicio</a>
                 <a href="/admin/historial" class="navbar-logout">Historial</a>
+                <a href="/admin/configuracion" class="navbar-logout">Horarios</a>
                 <a href="/admin/logout" class="navbar-logout">Cerrar Sesión</a>
             </div>
         </div>
