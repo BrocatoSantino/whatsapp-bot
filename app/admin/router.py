@@ -31,7 +31,7 @@ async def login_get(request: Request, tenant: Tenant | None = Depends(get_admin_
     if tenant:
         return RedirectResponse(url="/admin", status_code=303)
     return templates.TemplateResponse(
-        request=request, name="login.html", context={"error": False, "business_name": "TurnosPro", "hide_navbar": True}
+        request=request, name="login.html", context={"error": False, "business_name": "TurnoFlow", "hide_navbar": True}
     )
 
 @router.post("/admin/login", response_class=HTMLResponse)
@@ -50,7 +50,7 @@ async def login_post(request: Request, username: str = Form(...), password: str 
         return response
     
     return templates.TemplateResponse(
-        request=request, name="login.html", context={"error": True, "business_name": "TurnosPro", "hide_navbar": True}
+        request=request, name="login.html", context={"error": True, "business_name": "TurnoFlow", "hide_navbar": True}
     )
 
 @router.get("/admin/logout")
