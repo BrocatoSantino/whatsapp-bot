@@ -51,12 +51,15 @@ def get_client_appointments(db: Session, phone: str, tenant_id: int) -> list[App
         
     ar_tz = timezone(timedelta(hours=-3))
     today = datetime.now(ar_tz).date()
-    return db.query(Appointment).filter(
+    appointments = db.query(Appointment).filter(
         Appointment.tenant_id == tenant_id,
         Appointment.client_id == client.id,
-        Appointment.status == "confirmed",
+        Appointment.status.in_(["confirmed", "pending"]),
         Appointment.date >= today
     ).order_by(Appointment.date, Appointment.time).all()
+    
+    now = datetime.now(ar_tz).replace(tzinfo=None)
+    return [apt for apt in appointments if datetime.combine(apt.date, apt.time) >= now]
 
 def cancel_appointment(db: Session, appointment_id: int, phone: str, tenant_id: int) -> bool:
     """Cancela un turno si pertenece al cliente y al tenant."""
@@ -71,6 +74,11 @@ def cancel_appointment(db: Session, appointment_id: int, phone: str, tenant_id: 
     ).first()
     
     if appointment and appointment.status != "cancelled":
+        ar_tz = timezone(timedelta(hours=-3))
+        now = datetime.now(ar_tz).replace(tzinfo=None)
+        if datetime.combine(appointment.date, appointment.time) < now:
+            return False
+            
         appointment.status = "cancelled"
         db.commit()
         return True
