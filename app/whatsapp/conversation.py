@@ -445,6 +445,21 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
             {"id": "mis_turnos", "title": "📋 Mis turnos"},
         ]
         await send_reply_buttons(phone, msg, buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
+        
+        if tenant.owner_phone:
+            client_name = name if name else "Un cliente"
+            owner_msg = (
+                f"🔔 *Nuevo Turno Reservado*\n\n"
+                f"👤 Cliente: {client_name} ({phone})\n"
+                f"📅 Fecha: {format_date(chosen_date)}\n"
+                f"🕐 Hora: {format_time(chosen_time)}\n"
+                f"✂️ Servicio: {service_name}"
+            )
+            try:
+                await send_message(tenant.owner_phone, owner_msg, tenant.wa_phone_number_id, tenant.wa_access_token)
+            except Exception as e:
+                logger.error(f"No se pudo notificar al dueño del nuevo turno: {e}")
+                
         reset_conversation(tenant.id, phone)
     else:
         await send_message(phone, "Ups, ese horario ya no está disponible 😕\nEscribí *menu* para intentar de nuevo.", tenant.wa_phone_number_id, tenant.wa_access_token)
