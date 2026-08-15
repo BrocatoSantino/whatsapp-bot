@@ -89,15 +89,14 @@ async def dashboard(
     appointments = []
     now = datetime.now(ar_tz).replace(tzinfo=None)
     for app in raw_appointments:
-        if app.status in ['cancelled', 'no_show', 'completed']:
+        if app.status in ['cancelled', 'no_show']:
             continue
             
-        if target_date == now.date():
+        if target_date == now.date() and app.status != 'completed':
             app_datetime = datetime.combine(target_date, app.time)
             if now > app_datetime + timedelta(minutes=30):
                 app.status = 'completed'
                 db.commit()
-                continue
                 
         appointments.append(app)
         

@@ -208,7 +208,7 @@ async def _handle_idle(phone: str, name: str, db: Session, tenant: Tenant):
     buttons = [
         {"id": "sacar_turno", "title": "📅 Sacar turno"},
         {"id": "mis_turnos", "title": "📋 Mis turnos"},
-        {"id": "cancelar_turno", "title": "❌ Cancelar"},
+        {"id": "cancelar_turno", "title": "❌ Cancelar turno"},
     ]
     await send_reply_buttons(phone, body, buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
     update_conversation(tenant.id, phone, "MENU")
@@ -262,7 +262,7 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session, tenant
 
         rows.append({
             "id": "cancel_flow",
-            "title": "❌ Cancelar reserva"
+            "title": "❌ Cancelar acción"
         })
 
         sections = [{"title": "Días disponibles", "rows": rows}]
@@ -369,7 +369,7 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
 
     msg_lines.append("\n📝 _Escribí la hora que querés (ej: 16:30 o 16)_")
 
-    buttons = [{"id": "cancel_flow", "title": "❌ Cancelar"}]
+    buttons = [{"id": "cancel_flow", "title": "❌ Cancelar acción"}]
     await send_reply_buttons(phone, "\n".join(msg_lines), buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
 
     data = conv["data"].copy()
