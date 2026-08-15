@@ -203,7 +203,8 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
 
 async def _handle_idle(phone: str, name: str, db: Session, tenant: Tenant):
     greeting = f"¡Hola {name}!" if name else "¡Hola!"
-    body = (f"💈 {greeting} Soy el asistente de *{tenant.name}*\n\n"
+    contact_msg = f"\n📞 Si necesitás contactar a un humano, podés hablar al: {tenant.owner_phone}\n" if tenant.owner_phone else ""
+    body = (f"💈 {greeting} Soy el asistente de *{tenant.name}*{contact_msg}\n"
             f"¿Qué necesitás?")
     buttons = [
         {"id": "sacar_turno", "title": "📅 Sacar turno"},

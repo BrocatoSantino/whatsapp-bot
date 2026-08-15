@@ -342,6 +342,10 @@
             font-size: 1.5rem;
             font-weight: 700;
         }
+
+        .hide-mobile {
+            display: none;
+        }
     }
 </style>
 {% endblock %}
@@ -384,16 +388,22 @@
         </div>
     </div>
 
-    <h2 class="appointments-header">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-        Agenda del día
-    </h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 class="appointments-header" style="margin-bottom: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Agenda del día
+        </h2>
+        <button class="btn btn-primary" onclick="openManualTurnoModal()" style="padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-radius: 99px; font-size: 0.9rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span class="hide-mobile">Nuevo Turno</span>
+        </button>
+    </div>
 
     {% if appointments %}
     <div class="appointments-list">
         {% for appt in appointments %}
         <div class="card appointment-card status-{{ appt.status }}" 
-             onclick="openBottomSheet('{{ appt.id }}', '{{ appt.client.name if appt.client else 'Cliente Desconocido' }}', '{{ appt.time.strftime('%H:%M') }}')">
+             onclick="openBottomSheet('{{ appt.id }}', '{{ appt.client.name if appt.client else 'Cliente Desconocido' }}', '{{ appt.time.strftime('%H:%M') }}', '{{ appt.client.phone if appt.client else '' }}')">
             <div class="appointment-info">
                 <div class="appointment-time">
                     {{ appt.time.strftime('%H:%M') }}
@@ -444,19 +454,16 @@
     <p class="sheet-subtitle" id="sheetTime">00:00</p>
     
     <div class="sheet-actions">
+        <a id="btnWhatsapp" href="#" target="_blank" class="btn btn-sheet" style="background-color: #25D366; color: white; border: none; text-decoration: none; display: flex; justify-content: center; align-items: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            Enviar WhatsApp
+        </a>
+
         <form id="formCompleted" action="/admin/estado/0" method="POST">
             <input type="hidden" name="status" value="completed">
             <button type="submit" class="btn btn-sheet btn-success">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                 Marcar como Completado
-            </button>
-        </form>
-        
-        <form id="formNoShow" action="/admin/estado/0" method="POST">
-            <input type="hidden" name="status" value="no_show">
-            <button type="submit" class="btn btn-sheet btn-warning">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                Cliente No Asistió
             </button>
         </form>
         
@@ -470,8 +477,55 @@
     </div>
 </div>
 
+<!-- Manual Appointment Modal UI -->
+<div class="bottom-sheet-overlay" id="manualTurnoOverlay" onclick="closeManualTurnoModal()"></div>
+<div class="bottom-sheet" id="manualTurnoModal">
+    <div class="sheet-handle"></div>
+    <h3 class="sheet-title">Agregar Turno Manual</h3>
+    <p class="sheet-subtitle">Registrar un cliente presencial</p>
+    
+    <form action="/admin/turnos/nuevo" method="POST" id="manualTurnoForm">
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Fecha</label>
+            <input type="date" name="date" id="manualDate" value="{{ target_date.strftime('%Y-%m-%d') }}" required onchange="fetchAvailableSlots()" style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none; font-family:inherit;">
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Nombre del Cliente</label>
+            <input type="text" name="client_name" required placeholder="Ej: Juan Presencial" style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none;">
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Teléfono (Opcional)</label>
+            <input type="tel" name="client_phone" placeholder="Ej: 5491123456789" style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none;">
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Servicio</label>
+            <select name="service_id" id="manualService" required onchange="fetchAvailableSlots()" style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none;">
+                <option value="" disabled selected>Seleccione un servicio...</option>
+                {% for svc in services %}
+                <option value="{{ svc.id }}">{{ svc.name }} - ${{ "{:,.0f}".format(svc.price).replace(',', '.') }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Horario</label>
+            <select name="time" id="manualTime" required disabled style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none;">
+                <option value="" disabled selected>Primero seleccione un servicio</option>
+            </select>
+        </div>
+        
+        <button type="submit" id="manualSubmitBtn" disabled class="btn btn-primary" style="width:100%; padding:1rem; border-radius:12px; font-weight:bold;">
+            Guardar Turno
+        </button>
+    </form>
+</div>
+
 <script>
-    function openBottomSheet(id, clientName, time) {
+    function openBottomSheet(id, clientName, time, phone) {
         // Solo abrir si no está cancelado/completado/no_show, o si queremos permitir editarlos.
         // Por ahora permitimos re-editar cualquier turno.
         
@@ -480,8 +534,16 @@
         
         // Update form actions
         document.getElementById('formCompleted').action = `/admin/estado/${id}`;
-        document.getElementById('formNoShow').action = `/admin/estado/${id}`;
         document.getElementById('formCancel').action = `/admin/estado/${id}`;
+        
+        // Update WhatsApp button
+        const btnWa = document.getElementById('btnWhatsapp');
+        if (phone && phone.trim() !== '' && !phone.startsWith('manual_')) {
+            btnWa.style.display = 'flex';
+            btnWa.href = `https://wa.me/${phone}`;
+        } else {
+            btnWa.style.display = 'none';
+        }
         
         // Show sheet
         document.getElementById('bottomSheetOverlay').classList.add('open');
@@ -493,6 +555,59 @@
         document.getElementById('bottomSheetOverlay').classList.remove('open');
         document.getElementById('bottomSheet').classList.remove('open');
         document.body.style.overflow = '';
+    }
+    function openManualTurnoModal() {
+        document.getElementById('manualTurnoOverlay').classList.add('open');
+        document.getElementById('manualTurnoModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeManualTurnoModal() {
+        document.getElementById('manualTurnoOverlay').classList.remove('open');
+        document.getElementById('manualTurnoModal').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    async function fetchAvailableSlots() {
+        const serviceSelect = document.getElementById('manualService');
+        const timeSelect = document.getElementById('manualTime');
+        const submitBtn = document.getElementById('manualSubmitBtn');
+        const date = document.getElementById('manualDate').value;
+        const serviceId = serviceSelect.value;
+        
+        if (!serviceId) return;
+        
+        timeSelect.disabled = true;
+        submitBtn.disabled = true;
+        timeSelect.innerHTML = '<option value="" disabled selected>Cargando horarios...</option>';
+        
+        try {
+            const res = await fetch(`/admin/api/slots?date=${date}&service_id=${serviceId}`);
+            const slots = await res.json();
+            
+            timeSelect.innerHTML = '';
+            if (slots.length === 0) {
+                timeSelect.innerHTML = '<option value="" disabled selected>No hay horarios disponibles</option>';
+            } else {
+                timeSelect.innerHTML = '<option value="" disabled selected>Seleccione un horario...</option>';
+                slots.forEach(slot => {
+                    const opt = document.createElement('option');
+                    opt.value = slot.time;
+                    opt.textContent = slot.time;
+                    timeSelect.appendChild(opt);
+                });
+                timeSelect.disabled = false;
+                
+                timeSelect.addEventListener('change', function() {
+                    if (this.value) {
+                        submitBtn.disabled = false;
+                    }
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            timeSelect.innerHTML = '<option value="" disabled selected>Error al cargar horarios</option>';
+        }
     }
 </script>
 

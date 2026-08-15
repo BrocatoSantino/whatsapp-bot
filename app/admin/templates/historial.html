@@ -1,49 +1,55 @@
 {% extends "base.html" %}
 
 {% block extra_css %}
-<style>
     .date-navigator {
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: center;
-        gap: 1.5rem;
-        margin-bottom: 3.5rem;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 2.5rem;
+        width: 100%;
     }
 
     .btn-nav {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border-radius: 10px;
         background: rgba(255, 255, 255, 0.05);
         color: var(--text-primary);
-        transition: background 0.2s ease;
         border: 1px solid rgba(255, 255, 255, 0.05);
         text-decoration: none;
         font-size: 1.25rem;
         font-weight: bold;
+        transition: background 0.2s ease;
     }
 
     .btn-nav:hover {
         background: rgba(255, 255, 255, 0.1);
     }
 
-    .date-title {
-        font-size: 1.35rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        text-transform: capitalize;
-        text-align: center;
-        white-space: nowrap;
+    .date-title-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1;
     }
 
+    .date-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: capitalize;
+        white-space: nowrap;
+    }
+    
     .badge-today {
         display: inline-block;
-        margin-left: 0.5rem;
+        margin-top: 0.2rem;
         background-color: var(--text-primary);
         color: var(--bg-primary);
         font-size: 0.7rem;
@@ -55,386 +61,246 @@
         box-shadow: 0 0 10px rgba(255,255,255,0.2);
     }
 
-    /* Bento Box Grid */
-    .bento-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    .metrics-container {
+        display: flex;
+        flex-wrap: wrap;
         gap: 1.5rem;
-        margin-bottom: 3.5rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.5rem;
     }
 
-    .bento-item {
-        position: relative;
-        overflow: hidden;
+    .metric-item {
+        flex: 1;
+        min-width: 100px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        padding: 2rem;
+        border-left: 1px solid var(--border);
+        padding-left: 1rem;
     }
 
-    /* Subtle background patterns for bento cards */
-    .bento-item::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 50%);
-        opacity: 0;
-        transition: opacity 0.5s ease;
-        pointer-events: none;
+    .metric-item:first-child {
+        border-left: none;
+        padding-left: 0;
     }
 
-    .bento-item:hover::after {
-        opacity: 1;
-    }
-
-    .bento-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1.25rem;
-        color: var(--text-primary);
-    }
-
-    .stat-label {
-        font-size: 0.875rem;
+    .metric-label {
+        font-size: 0.85rem;
         color: var(--text-secondary);
         font-weight: 500;
-        margin-bottom: 0.5rem;
-    }
-
-    .stat-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        letter-spacing: -0.04em;
-        line-height: 1;
-    }
-
-    .appointments-header {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .appointments-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    /* Smart Card Styles */
-    .appointment-card {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1.5rem;
-        background: linear-gradient(145deg, rgba(20,20,20,0.8) 0%, rgba(10,10,10,0.9) 100%);
-        border-left: 4px solid var(--border);
-        cursor: pointer;
-        position: relative;
-    }
-
-    .appointment-card:active {
-        transform: scale(0.98);
-    }
-
-    .status-completed {
-        border-left-color: var(--success);
-        opacity: 0.7;
-    }
-    
-    .status-pending {
-        border-left-color: #3b82f6; /* Blue for pending/upcoming */
-    }
-
-    .status-no_show {
-        border-left-color: #f59e0b; /* Orange for no-show */
-        opacity: 0.5;
-    }
-
-    .status-cancelled {
-        border-left-color: var(--danger);
-        opacity: 0.35;
-        background: rgba(10,10,10,0.5);
-    }
-    
-    .status-cancelled .appointment-time,
-    .status-no_show .appointment-time {
-        text-decoration: line-through;
-        color: var(--text-secondary);
-    }
-
-    .badge-status {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.75rem;
-        border-radius: 6px;
-        font-weight: 600;
+        margin-bottom: 0.25rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
-    .badge-completed { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
-    .badge-no_show { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
-    .badge-cancelled { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
 
-    /* Bottom Sheet */
-    .bottom-sheet-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.6);
-        backdrop-filter: blur(4px);
-        z-index: 999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
     }
 
-    .bottom-sheet {
-        position: fixed;
-        bottom: -100%;
-        left: 0;
-        right: 0;
-        background: var(--bg-card);
-        border-top-left-radius: 24px;
-        border-top-right-radius: 24px;
-        padding: 2rem 1.5rem;
-        z-index: 1000;
-        transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        border-top: 1px solid var(--border);
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-        max-width: 600px;
-        margin: 0 auto;
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+        margin-bottom: 3rem;
+        background: linear-gradient(145deg, rgba(20,20,20,0.8) 0%, rgba(10,10,10,0.9) 100%);
+        border-radius: 16px;
+        padding: 1rem;
+        border: 1px solid var(--border);
     }
 
-    .bottom-sheet.open {
-        bottom: 0;
-    }
-
-    .bottom-sheet-overlay.open {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .sheet-handle {
-        width: 40px;
-        height: 4px;
-        background: var(--border-hover);
-        border-radius: 4px;
-        margin: -1rem auto 1.5rem;
-    }
-
-    .sheet-title {
+    .section-title {
         font-size: 1.25rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
-        text-align: center;
-    }
-
-    .sheet-subtitle {
-        color: var(--text-secondary);
-        font-size: 0.875rem;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-
-    .sheet-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .btn-sheet {
-        width: 100%;
-        padding: 1rem;
-        font-size: 1rem;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-
-    .btn-success {
-        background-color: rgba(16, 185, 129, 0.1);
-        color: var(--success);
-        border: 1px solid rgba(16, 185, 129, 0.2);
-    }
-
-    .btn-warning {
-        background-color: rgba(245, 158, 11, 0.1);
-        color: #f59e0b;
-        border: 1px solid rgba(245, 158, 11, 0.2);
+        margin-bottom: 1rem;
+        color: var(--text-primary);
     }
 
     @media (max-width: 768px) {
         .date-navigator {
-            margin-bottom: 2.5rem;
+            margin-bottom: 1.5rem;
         }
         
-        .date-title {
-            font-size: 1.15rem;
-            min-width: auto;
-        }
-        
-        .btn-nav {
-            width: 36px;
-            height: 36px;
-        }
-        
-        .appointment-card {
+        .metrics-container {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 1.5rem;
+            gap: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 0 1rem;
+            border: 1px solid var(--border);
+        }
+        
+        .metric-item {
+            border-left: none;
+            padding: 1rem 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .metric-item:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            margin-bottom: 0;
+            font-size: 0.8rem;
+        }
+        
+        .metric-value {
+            font-size: 1.25rem;
+        }
+
+        .chart-container {
+            height: 250px;
+            padding: 0.5rem;
+            margin-top: 1rem;
         }
     }
-</style>
 {% endblock %}
 
 {% block content %}
 <div class="fade-in">
-    <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 2.5rem; width: 100%;">
-        <a href="?fecha={{ prev_date.strftime('%Y-%m-%d') }}" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; min-width: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #f5f5f5; border: 1px solid rgba(255,255,255,0.05); text-decoration: none; font-size: 1.25rem; font-weight: bold;">&larr;</a>
+    <div class="date-navigator">
+        <a href="?week_offset={{ week_offset - 1 }}" class="btn-nav">&larr;</a>
         
-        <label style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; min-width: 0;">
-            <input type="date" value="{{ target_date.strftime('%Y-%m-%d') }}" onchange="window.location.href='?fecha=' + this.value" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0.01; cursor: pointer; z-index: 10;">
-            
-            <div style="display: flex; align-items: center; justify-content: center; gap: 0.3rem; max-width: 100%;">
-                <span style="font-size: 1.1rem; font-weight: 700; text-transform: capitalize; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ fecha_format }}</span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <div class="date-title-container">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <span class="date-title">{{ week_range_str }}</span>
             </div>
-            {% if is_today %}
-            <span class="badge-today" style="margin-top: 0.2rem;">HOY</span>
+            {% if week_offset == 0 %}
+            <span class="badge-today">Esta Semana</span>
             {% endif %}
-        </label>
-
-        <a href="?fecha={{ next_date.strftime('%Y-%m-%d') }}" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; min-width: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #f5f5f5; border: 1px solid rgba(255,255,255,0.05); text-decoration: none; font-size: 1.25rem; font-weight: bold;">&rarr;</a>
-    </div>
-
-    <h2 class="appointments-header">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-        Historial de Turnos
-    </h2>
-
-    {% if appointments %}
-    <div class="appointments-list">
-        {% for appt in appointments %}
-        <div class="card appointment-card status-{{ appt.status }}" 
-             onclick="openBottomSheet('{{ appt.id }}', '{{ appt.client.name if appt.client else 'Cliente Desconocido' }}', '{{ appt.time.strftime('%H:%M') }}')">
-            <div class="appointment-info">
-                <div class="appointment-time">
-                    {{ appt.time.strftime('%H:%M') }}
-                </div>
-                <div class="appointment-details">
-                    <h3>{{ appt.client.name if appt.client else 'Cliente Desconocido' }}</h3>
-                    <div class="appointment-meta">
-                        <span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                            {{ appt.client.phone if appt.client else '-' }}
-                        </span>
-                        <span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            {{ appt.service.name if appt.service else 'Servicio' }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="appointment-actions">
-                {% if appt.status == 'completed' %}
-                <span class="badge-status badge-completed">Completado</span>
-                {% elif appt.status == 'no_show' %}
-                <span class="badge-status badge-no_show">No Asistió</span>
-                {% elif appt.status == 'cancelled' %}
-                <span class="badge-status badge-cancelled">Cancelado</span>
-                {% endif %}
-            </div>
         </div>
-        {% endfor %}
+
+        <a href="?week_offset={{ week_offset + 1 }}" class="btn-nav" style="{{ 'opacity: 0.5; pointer-events: none;' if week_offset >= 0 else '' }}">&rarr;</a>
     </div>
-    {% else %}
-    <div class="empty-state">
+
+    <h2 class="section-title">Resumen Semanal</h2>
+
+    <div class="metrics-container">
+        <div class="metric-item">
+            <span class="metric-label">Cortes</span>
+            <span class="metric-value">{{ completed_cuts }}</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Tiempo</span>
+            <span class="metric-value">{{ time_str }}</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Ingresos</span>
+            <span class="metric-value">${{ "{:,.0f}".format(total_revenue).replace(",", ".") }}</span>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="weeklyChart"></canvas>
+    </div>
+    
+    {% if completed_cuts == 0 %}
+    <div class="empty-state" style="margin-top: 2rem;">
         <div class="empty-state-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
         </div>
-        <h3>No hay turnos agendados</h3>
-        <p>Todo tranquilo por ahora.</p>
+        <h3>No hay actividad</h3>
+        <p>Aún no se han completado turnos esta semana.</p>
     </div>
     {% endif %}
+
 </div>
 
-<!-- Bottom Sheet UI -->
-<div class="bottom-sheet-overlay" id="bottomSheetOverlay" onclick="closeBottomSheet()"></div>
-<div class="bottom-sheet" id="bottomSheet">
-    <div class="sheet-handle"></div>
-    <h3 class="sheet-title" id="sheetClientName">Cliente</h3>
-    <p class="sheet-subtitle" id="sheetTime">00:00</p>
-    
-    <div class="sheet-actions">
-        <form id="formCompleted" action="/admin/estado/0" method="POST">
-            <input type="hidden" name="status" value="completed">
-            <button type="submit" class="btn btn-sheet btn-success">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                Marcar como Completado
-            </button>
-        </form>
-        
-        <form id="formNoShow" action="/admin/estado/0" method="POST">
-            <input type="hidden" name="status" value="no_show">
-            <button type="submit" class="btn btn-sheet btn-warning">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                Cliente No Asistió
-            </button>
-        </form>
-        
-        <form id="formCancel" action="/admin/estado/0" method="POST" onsubmit="return confirm('¿Seguro que quieres cancelar este turno?');">
-            <input type="hidden" name="status" value="cancelled">
-            <button type="submit" class="btn btn-sheet btn-danger" style="background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                Cancelar Turno
-            </button>
-        </form>
-    </div>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    function openBottomSheet(id, clientName, time) {
-        // Solo abrir si no está cancelado/completado/no_show, o si queremos permitir editarlos.
-        // Por ahora permitimos re-editar cualquier turno.
-        
-        document.getElementById('sheetClientName').textContent = clientName;
-        document.getElementById('sheetTime').textContent = time;
-        
-        // Update form actions
-        document.getElementById('formCompleted').action = `/admin/estado/${id}`;
-        document.getElementById('formNoShow').action = `/admin/estado/${id}`;
-        document.getElementById('formCancel').action = `/admin/estado/${id}`;
-        
-        // Show sheet
-        document.getElementById('bottomSheetOverlay').classList.add('open');
-        document.getElementById('bottomSheet').classList.add('open');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('weeklyChart').getContext('2d');
     
-    function closeBottomSheet() {
-        document.getElementById('bottomSheetOverlay').classList.remove('open');
-        document.getElementById('bottomSheet').classList.remove('open');
-        document.body.style.overflow = '';
-    }
-</script>
+    const dailyCounts = {{ daily_counts | tojson }};
+    const dailyDates = {{ daily_dates | safe }};
+    const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    
+    const labels = days.map((day, index) => `${day}\n${dailyDates[index]}`);
 
+    let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(252, 76, 2, 0.5)'); // Strava Orange
+    gradient.addColorStop(1, 'rgba(252, 76, 2, 0.0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cortes completados',
+                data: dailyCounts,
+                borderColor: '#fc4c02', // Strava Orange
+                backgroundColor: gradient,
+                borderWidth: 3,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#fc4c02',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4 
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false 
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    padding: 10,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw === 1 ? '1 corte' : context.raw + ' cortes';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1, 
+                        color: 'rgba(255,255,255,0.5)',
+                        font: {
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255,255,255,0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: 'rgba(255,255,255,0.5)',
+                        font: {
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+        }
+    });
+});
+</script>
 {% endblock %}
