@@ -262,7 +262,7 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session, tenant
 
         rows.append({
             "id": "cancel_flow",
-            "title": "❌ Cancelar acción"
+            "title": "⬅️ Volver"
         })
 
         sections = [{"title": "Días disponibles", "rows": rows}]
@@ -369,7 +369,7 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
 
     msg_lines.append("\n📝 _Escribí la hora que querés (ej: 16:30 o 16)_")
 
-    buttons = [{"id": "cancel_flow", "title": "❌ Cancelar acción"}]
+    buttons = [{"id": "cancel_flow", "title": "⬅️ Volver"}]
     await send_reply_buttons(phone, "\n".join(msg_lines), buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
 
     data = conv["data"].copy()
