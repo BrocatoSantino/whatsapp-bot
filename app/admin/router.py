@@ -415,3 +415,95 @@ async def add_manual_appointment(
         print(f"Error creating manual appointment: {e}")
         
     return RedirectResponse(url=f"/admin?fecha={date}", status_code=303)
+
+@router.get("/admin/servicios", response_class=HTMLResponse)
+async def servicios_get(
+    request: Request,
+    db: Session = Depends(get_db),
+    tenant: Tenant | None = Depends(get_admin_session)
+):
+    if not tenant:
+        return RedirectResponse(url="/admin/login", status_code=303)
+        
+    services = db.query(Service).filter(Service.tenant_id == tenant.id).all()
+    
+    return templates.TemplateResponse(
+        request=request,
+        name="servicios.html",
+        context={
+            "business_name": tenant.name,
+            "services": services
+        }
+    )
+
+@router.post("/admin/servicios/nuevo")
+async def add_service(
+    name: str = Form(...),
+    price: float = Form(...),
+    duration_minutes: int = Form(...),
+    db: Session = Depends(get_db),
+    tenant: Tenant | None = Depends(get_admin_session)
+):
+    if not tenant:
+        return RedirectResponse(url="/admin/login", status_code=303)
+        
+    try:
+        new_service = Service(
+            tenant_id=tenant.id,
+            name=name,
+            price=price,
+            duration_minutes=duration_minutes,
+            active=True
+        )
+        db.add(new_service)
+        db.commit()
+    except Exception as e:
+        print(f"Error creating service: {e}")
+        
+    return RedirectResponse(url="/admin/servicios", status_code=303)
+
+@router.post("/admin/servicios/{service_id}/editar")
+async def edit_service(
+    service_id: int,
+    name: str = Form(...),
+    price: float = Form(...),
+    duration_minutes: int = Form(...),
+    active: str = Form(None),
+    db: Session = Depends(get_db),
+    tenant: Tenant | None = Depends(get_admin_session)
+):
+    if not tenant:
+        return RedirectResponse(url="/admin/login", status_code=303)
+        
+    try:
+        service = db.query(Service).filter(Service.id == service_id, Service.tenant_id == tenant.id).first()
+        if service:
+            service.name = name
+            service.price = price
+            service.duration_minutes = duration_minutes
+            service.active = active == "true"
+            db.commit()
+    except Exception as e:
+        print(f"Error editing service: {e}")
+        
+    return RedirectResponse(url="/admin/servicios", status_code=303)
+
+@router.post("/admin/servicios/{service_id}/eliminar")
+async def delete_service(
+    service_id: int,
+    db: Session = Depends(get_db),
+    tenant: Tenant | None = Depends(get_admin_session)
+):
+    if not tenant:
+        return RedirectResponse(url="/admin/login", status_code=303)
+        
+    try:
+        service = db.query(Service).filter(Service.id == service_id, Service.tenant_id == tenant.id).first()
+        if service:
+            db.delete(service)
+            db.commit()
+    except Exception as e:
+        print(f"Error deleting service: {e}")
+        
+    return RedirectResponse(url="/admin/servicios", status_code=303)
+

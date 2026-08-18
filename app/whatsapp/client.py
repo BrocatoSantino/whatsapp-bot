@@ -75,3 +75,5 @@ async def send_list(phone: str, body: str, button_text: str, sections: list[dict
         response = await client.post(api_url, json=payload, headers=headers)
         response.raise_for_status()
         return response.json()
+
+
