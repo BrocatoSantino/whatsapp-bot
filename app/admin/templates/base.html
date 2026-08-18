@@ -248,6 +248,11 @@
             color: var(--text-primary);
             cursor: pointer;
             padding: 0.5rem;
+            transition: transform 0.2s ease;
+        }
+        
+        .menu-toggle:active {
+            transform: scale(0.9);
         }
 
         .navbar-links {
@@ -255,37 +260,83 @@
             gap: 0.5rem;
             align-items: center;
         }
+        
+        .menu-close {
+            display: none;
+        }
+        
+        .drawer-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
 
         @media (max-width: 768px) {
             .menu-toggle {
                 display: block;
             }
             
+            .menu-close {
+                display: block;
+                position: absolute;
+                top: 1.5rem;
+                right: 1.5rem;
+                background: none;
+                border: none;
+                color: var(--text-primary);
+                cursor: pointer;
+                padding: 0.5rem;
+                transition: transform 0.2s ease;
+            }
+            
+            .menu-close:active {
+                transform: scale(0.9);
+            }
+            
             .navbar-links {
-                display: none;
-                width: 100%;
+                position: fixed;
+                top: 0;
+                right: -300px;
+                width: 280px;
+                height: 100vh;
+                background: var(--bg-primary);
+                border-left: 1px solid var(--border);
                 flex-direction: column;
-                padding-top: 1rem;
-                gap: 0.25rem;
+                align-items: stretch;
+                padding: 5rem 1.5rem 2rem 1.5rem;
+                gap: 1rem;
+                transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 1000;
+                box-shadow: -10px 0 30px rgba(0,0,0,0.5);
             }
 
             .navbar-links.active {
-                display: flex;
+                right: 0;
             }
             
             .navbar-logout {
-                width: 100%;
                 text-align: left;
-                padding: 0.75rem 1rem;
+                padding: 1rem 1.25rem;
+                font-size: 1rem;
+                border: 1px solid rgba(255,255,255,0.05);
+                border-radius: 12px;
+                background: rgba(255,255,255,0.02);
             }
             
-            .navbar-content {
-                flex-direction: column;
-                align-items: flex-start;
+            .navbar-logout:hover {
+                transform: translateX(5px);
             }
             
             .navbar-brand-wrapper {
-                width: 100% !important;
+                width: 100%;
             }
         }
 
@@ -300,19 +351,45 @@
                 <a href="/admin" class="navbar-brand">
                     <span>{{ business_name }}</span>
                 </a>
-                <button class="menu-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
+                <button class="menu-toggle" onclick="toggleMenu()">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
             </div>
+            
+            <div class="drawer-overlay" id="drawer-overlay" onclick="toggleMenu()"></div>
+            
             <div class="navbar-links" id="nav-links">
+                <button class="menu-close" onclick="toggleMenu()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
                 <a href="/admin" class="navbar-logout">Inicio</a>
                 <a href="/admin/historial" class="navbar-logout">Historial</a>
                 <a href="/admin/configuracion" class="navbar-logout">Horarios</a>
                 <a href="/admin/servicios" class="navbar-logout">Servicios</a>
-                <a href="/admin/logout" class="navbar-logout" style="color: #fca5a5;">Cerrar Sesión</a>
+                <div style="flex-grow: 1;"></div>
+                <a href="/admin/logout" class="navbar-logout" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.2);">Cerrar Sesión</a>
             </div>
         </div>
     </nav>
+    <script>
+        function toggleMenu() {
+            const navLinks = document.getElementById('nav-links');
+            const overlay = document.getElementById('drawer-overlay');
+            
+            navLinks.classList.toggle('active');
+            
+            if (overlay.style.display === 'block') {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 300);
+                document.body.style.overflow = '';
+            } else {
+                overlay.style.display = 'block';
+                // Small delay to allow display:block to apply before animating opacity
+                setTimeout(() => overlay.style.opacity = '1', 10);
+                document.body.style.overflow = 'hidden';
+            }
+        }
+    </script>
     {% endif %}
 
     <main class="container">
