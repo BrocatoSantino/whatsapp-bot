@@ -425,7 +425,7 @@ async def servicios_get(
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
         
-    services = db.query(Service).filter(Service.tenant_id == tenant.id).all()
+    services = db.query(Service).filter(Service.tenant_id == tenant.id).order_by(Service.active.desc(), Service.name.asc()).all()
     
     return templates.TemplateResponse(
         request=request,
