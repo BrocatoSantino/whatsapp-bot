@@ -88,3 +88,20 @@ class Appointment(Base):
     tenant = relationship("Tenant", back_populates="appointments")
     client = relationship("Client", back_populates="appointments")
     service = relationship("Service", back_populates="appointments")
+
+
+class ConversationState(Base):
+    """Estado de conversación del bot, persistido en base de datos para sobrevivir reinicios serverless."""
+    __tablename__ = "conversation_states"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
+    phone = Column(String, nullable=False, index=True)
+    state = Column(String, default="IDLE")
+    data_json = Column(String, default="{}")  # JSON serializado
+    last_activity = Column(DateTime, nullable=False)
+
+    __table_args__ = (
+        # Un solo estado por combinación tenant+phone
+        {"sqlite_autoincrement": True},
+    )

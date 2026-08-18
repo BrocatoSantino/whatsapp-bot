@@ -1,6 +1,7 @@
 import re
 import datetime
 import logging
+import json as json_module
 from sqlalchemy.orm import Session
 from app.whatsapp.client import send_message, send_reply_buttons, send_list
 from app.services.appointment import (
@@ -11,7 +12,8 @@ from app.services.appointment import (
     get_all_services
 )
 from app.services.availability import get_available_dates, get_available_slots
-from app.models import Tenant
+from app.models import Tenant, ConversationState
+from app.database import SessionLocal
 
 ar_tz = datetime.timezone(datetime.timedelta(hours=-3))
 
@@ -61,40 +63,114 @@ def parse_user_time(text: str) -> datetime.time | None:
     return None
 
 # ---------------------------------------------------------------------------
-# Gestión de estado
+# Gestión de estado (persistido en base de datos)
 # ---------------------------------------------------------------------------
+
+def _get_db_state(db: Session, tenant_id: int, phone: str) -> ConversationState | None:
+    """Busca el estado de conversación en la base de datos."""
+    return db.query(ConversationState).filter(
+        ConversationState.tenant_id == tenant_id,
+        ConversationState.phone == phone
+    ).first()
 
 def get_conversation(tenant_id: int, phone: str) -> dict:
     now = datetime.datetime.now(ar_tz).replace(tzinfo=None)
+    
+    # 1) Intentar leer de caché en memoria (rápido)
     key = (tenant_id, phone)
     if key in conversations:
         conv = conversations[key]
-        # Timeout de 10 minutos sin actividad
         if now - conv["last_activity"] > datetime.timedelta(minutes=10):
             reset_conversation(tenant_id, phone)
-    if key not in conversations:
-        conversations[key] = {
-            "state": "IDLE",
-            "data": {},
-            "last_activity": now
-        }
-    conversations[key]["last_activity"] = now
+        else:
+            conv["last_activity"] = now
+            return conv
+    
+    # 2) Si no está en memoria, buscar en la base de datos
+    db = SessionLocal()
+    try:
+        db_state = _get_db_state(db, tenant_id, phone)
+        if db_state and (now - db_state.last_activity) <= datetime.timedelta(minutes=10):
+            conv = {
+                "state": db_state.state,
+                "data": json_module.loads(db_state.data_json) if db_state.data_json else {},
+                "last_activity": db_state.last_activity
+            }
+            conversations[key] = conv
+            return conv
+    finally:
+        db.close()
+    
+    # 3) Si no existe en ningún lado, crear nuevo
+    conversations[key] = {
+        "state": "IDLE",
+        "data": {},
+        "last_activity": now
+    }
     return conversations[key]
 
 def update_conversation(tenant_id: int, phone: str, state: str, data: dict = None):
+    now = datetime.datetime.now(ar_tz).replace(tzinfo=None)
     key = (tenant_id, phone)
-    if key in conversations:
+    
+    # Actualizar caché en memoria
+    if key not in conversations:
+        conversations[key] = {"state": state, "data": data or {}, "last_activity": now}
+    else:
         conversations[key]["state"] = state
         if data is not None:
             conversations[key]["data"] = data
-        conversations[key]["last_activity"] = datetime.datetime.now(ar_tz).replace(tzinfo=None)
+        conversations[key]["last_activity"] = now
+    
+    # Persistir en base de datos
+    db = SessionLocal()
+    try:
+        db_state = _get_db_state(db, tenant_id, phone)
+        if db_state:
+            db_state.state = state
+            if data is not None:
+                db_state.data_json = json_module.dumps(data)
+            db_state.last_activity = now
+        else:
+            db_state = ConversationState(
+                tenant_id=tenant_id,
+                phone=phone,
+                state=state,
+                data_json=json_module.dumps(data or {}),
+                last_activity=now
+            )
+            db.add(db_state)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Error persistiendo estado de conversación: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 def reset_conversation(tenant_id: int, phone: str):
+    now = datetime.datetime.now(ar_tz).replace(tzinfo=None)
     key = (tenant_id, phone)
+    
+    # Resetear caché en memoria
     if key in conversations:
         conversations[key]["state"] = "IDLE"
         conversations[key]["data"] = {}
-        conversations[key]["last_activity"] = datetime.datetime.now(ar_tz).replace(tzinfo=None)
+        conversations[key]["last_activity"] = now
+    
+    # Resetear en base de datos
+    db = SessionLocal()
+    try:
+        db_state = _get_db_state(db, tenant_id, phone)
+        if db_state:
+            db_state.state = "IDLE"
+            db_state.data_json = "{}"
+            db_state.last_activity = now
+            db.commit()
+    except Exception as e:
+        logger.error(f"Error reseteando estado de conversación: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 # ---------------------------------------------------------------------------
 # Handler principal

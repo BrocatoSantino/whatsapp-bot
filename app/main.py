@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 # Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="puerto.barberr Bot API",
-    description="API de WhatsApp y Panel de Administración para puerto.barberr",
+    title="TurnoFlow API",
+    description="Sistema de gestión de turnos por WhatsApp para barberías",
     version="1.0.0"
 )
 
@@ -37,18 +37,3 @@ if os.path.exists(static_dir):
 async def root():
     return RedirectResponse(url="/admin", status_code=303)
 
-@app.get("/api/update-services")
-async def update_services(db: Session = Depends(get_db)):
-    from app.models import Service
-    services = db.query(Service).all()
-    out = []
-    for s in services:
-        if "corte" == s.name.lower().strip() or "corte de pelo" in s.name.lower():
-            s.price = 15000
-            s.active = True
-            out.append(f"Actualizado: {s.name} a ${s.price}")
-        else:
-            s.active = False
-            out.append(f"Desactivado: {s.name}")
-    db.commit()
-    return {"status": "ok", "changes": out}
