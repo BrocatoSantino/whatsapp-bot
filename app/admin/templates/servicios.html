@@ -104,7 +104,15 @@
         
         .service-actions {
             width: 100%;
-            justify-content: flex-end;
+            display: flex;
+            gap: 0.5rem;
+        }
+        .service-actions > button,
+        .service-actions > form {
+            flex: 1;
+        }
+        .service-actions > form > button {
+            width: 100%;
         }
 
         .edit-form {
@@ -163,15 +171,16 @@
                 <!-- View Mode -->
                 <div class="service-content" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 1rem;">
                     <div class="service-info">
-                        <h3>{{ service.name }}</h3>
-                        <div class="service-meta">
-                            <span><strong style="color: var(--text-primary);">${{ "{:,.0f}".format(service.price).replace(',', '.') }}</strong></span>
-                            <span>•</span>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <h3 style="margin: 0;">{{ service.name }}</h3>
                             {% if service.active %}
                             <span class="status-badge status-active">Activo</span>
                             {% else %}
                             <span class="status-badge status-inactive">Inactivo</span>
                             {% endif %}
+                        </div>
+                        <div class="service-meta">
+                            <span><strong style="color: var(--text-primary); font-size: 1.1rem;">${{ "{:,.0f}".format(service.price).replace(',', '.') }}</strong></span>
                         </div>
                     </div>
                     <div class="service-actions">

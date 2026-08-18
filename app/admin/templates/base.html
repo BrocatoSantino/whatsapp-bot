@@ -285,10 +285,7 @@
             }
             
             .navbar-brand-wrapper {
-                display: flex;
-                justify-content: space-between;
-                width: 100%;
-                align-items: center;
+                width: 100% !important;
             }
         }
 
@@ -299,7 +296,7 @@
     {% if not hide_navbar %}
     <nav class="navbar">
         <div class="navbar-content">
-            <div class="navbar-brand-wrapper" style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div class="navbar-brand-wrapper" style="display: flex; justify-content: space-between; align-items: center;">
                 <a href="/admin" class="navbar-brand">
                     <span>{{ business_name }}</span>
                 </a>
