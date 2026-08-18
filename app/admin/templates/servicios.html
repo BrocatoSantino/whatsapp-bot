@@ -110,6 +110,7 @@
         .edit-form {
             flex-direction: column;
             align-items: stretch;
+            gap: 1rem;
         }
 
         .edit-form .btn-group {
@@ -135,15 +136,11 @@
         <form action="/admin/servicios/nuevo" method="POST" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
             <div style="flex: 2; min-width: 200px;">
                 <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Nombre del Servicio</label>
-                <input type="text" name="name" required placeholder="Ej: Corte de pelo">
+                <input type="text" name="name" required placeholder="Ej: Corte Clásico">
             </div>
             <div style="flex: 1; min-width: 120px;">
                 <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Precio ($)</label>
-                <input type="number" name="price" required placeholder="Ej: 5000">
-            </div>
-            <div style="flex: 1; min-width: 120px;">
-                <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Duración (min)</label>
-                <input type="number" name="duration_minutes" required placeholder="Ej: 30">
+                <input type="number" name="price" required placeholder="Ej: 8000">
             </div>
             <button type="submit" class="btn btn-primary">Agregar</button>
         </form>
@@ -170,8 +167,6 @@
                         <div class="service-meta">
                             <span><strong style="color: var(--text-primary);">${{ "{:,.0f}".format(service.price).replace(',', '.') }}</strong></span>
                             <span>•</span>
-                            <span>{{ service.duration_minutes }} min</span>
-                            <span>•</span>
                             {% if service.active %}
                             <span class="status-badge status-active">Activo</span>
                             {% else %}
@@ -197,11 +192,7 @@
                         <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Precio ($)</label>
                         <input type="number" name="price" value="{{ service.price }}" required>
                     </div>
-                    <div style="flex: 1; min-width: 100px;">
-                        <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Duración (min)</label>
-                        <input type="number" name="duration_minutes" value="{{ service.duration_minutes }}" required>
-                    </div>
-                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem; min-width: 100px;">
                         <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); cursor: pointer;">
                             <input type="checkbox" name="active" value="true" {% if service.active %}checked{% endif %} style="width: auto;">
                             Activo

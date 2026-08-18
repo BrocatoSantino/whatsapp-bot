@@ -440,7 +440,6 @@ async def servicios_get(
 async def add_service(
     name: str = Form(...),
     price: float = Form(...),
-    duration_minutes: int = Form(...),
     db: Session = Depends(get_db),
     tenant: Tenant | None = Depends(get_admin_session)
 ):
@@ -452,7 +451,7 @@ async def add_service(
             tenant_id=tenant.id,
             name=name,
             price=price,
-            duration_minutes=duration_minutes,
+            duration_minutes=tenant.slot_duration_minutes,
             active=True
         )
         db.add(new_service)
@@ -467,7 +466,6 @@ async def edit_service(
     service_id: int,
     name: str = Form(...),
     price: float = Form(...),
-    duration_minutes: int = Form(...),
     active: str = Form(None),
     db: Session = Depends(get_db),
     tenant: Tenant | None = Depends(get_admin_session)
@@ -480,7 +478,7 @@ async def edit_service(
         if service:
             service.name = name
             service.price = price
-            service.duration_minutes = duration_minutes
+            service.duration_minutes = tenant.slot_duration_minutes
             service.active = active == "true"
             db.commit()
     except Exception as e:
