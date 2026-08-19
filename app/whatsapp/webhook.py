@@ -58,8 +58,7 @@ async def webhook_post(request: Request, background_tasks: BackgroundTasks):
         finally:
             db.close()
 
-        background_tasks.add_task(
-            process_message,
+        await process_message(
             msg_data["phone"],
             msg_data["name"],
             msg_data["text"],
