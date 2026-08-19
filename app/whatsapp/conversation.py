@@ -3,7 +3,7 @@ import datetime
 import logging
 import json as json_module
 from sqlalchemy.orm import Session
-from app.whatsapp.client import send_message, send_reply_buttons, send_list
+from app.whatsapp.client import send_message, send_reply_buttons, send_list, send_template_message
 from app.services.appointment import (
     get_or_create_client,
     create_appointment,
@@ -641,17 +641,40 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
         
         if tenant.owner_phone:
             client_name = name if name else "Un cliente"
-            owner_msg = (
-                f"🔔 *Nuevo Turno Reservado*\n\n"
-                f"👤 Cliente: {client_name} ({phone})\n"
-                f"📅 Fecha: {format_date(chosen_date)}\n"
-                f"🕐 Hora: {format_time(chosen_time)}\n"
-                f"✂️ Servicio: {service_name}"
-            )
             try:
-                await send_message(tenant.owner_phone, owner_msg, tenant.wa_phone_number_id, tenant.wa_access_token)
+                components = [
+                    {
+                        "type": "body",
+                        "parameters": [
+                            {"type": "text", "text": client_name},
+                            {"type": "text", "text": format_date(chosen_date)},
+                            {"type": "text", "text": format_time(chosen_time)},
+                            {"type": "text", "text": service_name}
+                        ]
+                    }
+                ]
+                await send_template_message(
+                    phone=tenant.owner_phone,
+                    template_name="nuevo_turno",
+                    language_code="es",
+                    components=components,
+                    phone_number_id=tenant.wa_phone_number_id,
+                    access_token=tenant.wa_access_token
+                )
             except Exception as e:
-                logger.error(f"No se pudo notificar al dueño del nuevo turno: {e}")
+                logger.error(f"No se pudo notificar al dueño del nuevo turno mediante plantilla: {e}")
+                # Fallback por si la plantilla falla por idioma o configuración
+                try:
+                    owner_msg = (
+                        f"🔔 *Nuevo Turno Reservado*\n\n"
+                        f"👤 Cliente: {client_name} ({phone})\n"
+                        f"📅 Fecha: {format_date(chosen_date)}\n"
+                        f"🕐 Hora: {format_time(chosen_time)}\n"
+                        f"✂️ Servicio: {service_name}"
+                    )
+                    await send_message(tenant.owner_phone, owner_msg, tenant.wa_phone_number_id, tenant.wa_access_token)
+                except Exception as ex:
+                    logger.error(f"Fallback de mensaje a dueño también falló: {ex}")
                 
         reset_conversation(tenant.id, phone)
     else:
@@ -709,15 +732,43 @@ async def _handle_human_handoff(phone: str, name: str, tenant: Tenant):
     await send_message(phone, "👤 ¡Dale! Le aviso al equipo que querés hablar.\nTe van a contestar a la brevedad 🙌", tenant.wa_phone_number_id, tenant.wa_access_token)
 
     if tenant.owner_phone:
+        client_name = name if name else "Un cliente"
+        
+        # Limpiar prefijo 549/54 del teléfono si existe
+        clean_phone = phone
+        if clean_phone.startswith("549"):
+            clean_phone = clean_phone[3:]
+        elif clean_phone.startswith("54"):
+            clean_phone = clean_phone[2:]
+            
         try:
-            client_name = name if name else "Un cliente"
-            await send_message(
-                tenant.owner_phone,
-                f"🔔 *Atención*\n\n{client_name} (tel: {phone}) quiere hablar con vos desde el bot de WhatsApp.",
-                tenant.wa_phone_number_id,
-                tenant.wa_access_token
+            components = [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": client_name},
+                        {"type": "text", "text": clean_phone}
+                    ]
+                }
+            ]
+            await send_template_message(
+                phone=tenant.owner_phone,
+                template_name="solicitud_contacto",
+                language_code="es",
+                components=components,
+                phone_number_id=tenant.wa_phone_number_id,
+                access_token=tenant.wa_access_token
             )
         except Exception as e:
-            logger.error(f"No se pudo notificar al dueño: {e}")
+            logger.error(f"No se pudo notificar al dueño con plantilla solicitud_contacto: {e}")
+            try:
+                await send_message(
+                    tenant.owner_phone,
+                    f"🔔 *Atención*\n\n{client_name} (tel: {clean_phone}) quiere hablar con vos desde el bot de WhatsApp.",
+                    tenant.wa_phone_number_id,
+                    tenant.wa_access_token
+                )
+            except Exception as ex:
+                logger.error(f"Fallback texto a dueño falló: {ex}")
 
     reset_conversation(tenant.id, phone)
