@@ -656,7 +656,7 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
                 await send_template_message(
                     phone=tenant.owner_phone,
                     template_name="nuevo_turno",
-                    language_code="es",
+                    language_code="es_AR",
                     components=components,
                     phone_number_id=tenant.wa_phone_number_id,
                     access_token=tenant.wa_access_token
@@ -754,7 +754,7 @@ async def _handle_human_handoff(phone: str, name: str, tenant: Tenant):
             await send_template_message(
                 phone=tenant.owner_phone,
                 template_name="solicitud_contacto",
-                language_code="es",
+                language_code="es_AR",
                 components=components,
                 phone_number_id=tenant.wa_phone_number_id,
                 access_token=tenant.wa_access_token
