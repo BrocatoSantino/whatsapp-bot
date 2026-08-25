@@ -2,6 +2,7 @@ import hmac
 import hashlib
 import json
 import logging
+import os
 from fastapi import APIRouter, Request, HTTPException, Query, BackgroundTasks
 from app.config import WA_VERIFY_TOKEN, WA_APP_SECRET
 from app.database import SessionLocal
@@ -128,13 +129,19 @@ async def process_message(phone: str, name: str, text: str, message_id: str, ten
         db.close()
 
 @router.get("/api/cron/reminders")
-async def trigger_reminders(background_tasks: BackgroundTasks):
+async def trigger_reminders(request: Request):
+    cron_secret = os.getenv("CRON_SECRET")
+    if cron_secret and request.headers.get("Authorization") != f"Bearer {cron_secret}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
     from app.services.reminders import send_tomorrow_reminders
-    background_tasks.add_task(send_tomorrow_reminders)
-    return {"status": "reminders_queued"}
+    await send_tomorrow_reminders()
+    return {"status": "reminders_sent"}
 
 @router.get("/api/cron/reengagement")
-async def trigger_reengagement(background_tasks: BackgroundTasks):
+async def trigger_reengagement(request: Request):
+    cron_secret = os.getenv("CRON_SECRET")
+    if cron_secret and request.headers.get("Authorization") != f"Bearer {cron_secret}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
     from app.services.reengagement import send_reengagement_messages
-    background_tasks.add_task(send_reengagement_messages)
-    return {"status": "reengagement_queued"}
+    await send_reengagement_messages()
+    return {"status": "reengagement_sent"}

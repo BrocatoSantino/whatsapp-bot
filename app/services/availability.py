@@ -13,7 +13,7 @@ def get_available_dates(db: Session, tenant_id: int, days_ahead: int = 7) -> lis
     
     try:
         working_days = json.loads(tenant.working_days)
-    except:
+    except (json.JSONDecodeError, TypeError):
         working_days = [0, 1, 2, 3, 4, 5]
         
     # Hora local de Argentina (UTC-3)
@@ -52,7 +52,7 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
     duration = service.duration_minutes
     try:
         business_shifts = json.loads(tenant.business_shifts)
-    except:
+    except (json.JSONDecodeError, TypeError):
         business_shifts = []
         
     slot_duration_minutes = tenant.slot_duration_minutes

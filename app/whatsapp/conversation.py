@@ -641,7 +641,7 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
         await send_reply_buttons(phone, msg, buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
         
         owner_phone = tenant.owner_phone or os.getenv("OWNER_PHONE")
-        print(f"DEBUG: Intentando notificar al dueño. owner_phone={repr(owner_phone)}")
+        logger.info(f"Notificando al dueño: owner_phone={repr(owner_phone)}")
         if owner_phone:
             client_name = name if name else "Un cliente"
             try:
@@ -656,7 +656,7 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
                         ]
                     }
                 ]
-                print(f"DEBUG: Enviando plantilla nuevo_turno a {owner_phone}")
+                logger.info(f"Enviando plantilla nuevo_turno a {owner_phone}")
                 res = await send_template_message(
                     phone=owner_phone,
                     template_name="nuevo_turno",
@@ -665,9 +665,9 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
                     phone_number_id=tenant.wa_phone_number_id,
                     access_token=tenant.wa_access_token
                 )
-                print(f"DEBUG: Respuesta de Meta enviando plantilla: {res}")
+                logger.info(f"Plantilla nuevo_turno enviada correctamente")
             except Exception as e:
-                print(f"ERROR: No se pudo notificar al dueño del nuevo turno mediante plantilla: {e}")
+
                 logger.error(f"No se pudo notificar al dueño del nuevo turno mediante plantilla: {e}")
                 # Fallback por si la plantilla falla por idioma o configuración
                 try:
@@ -682,7 +682,7 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
                 except Exception as ex:
                     logger.error(f"Fallback de mensaje a dueño también falló: {ex}")
         else:
-            print("DEBUG: tenant.owner_phone está vacío o es None. No se envía notificación al dueño.")
+            logger.warning("owner_phone está vacío. No se envía notificación al dueño.")
                 
         reset_conversation(tenant.id, phone)
     else:
