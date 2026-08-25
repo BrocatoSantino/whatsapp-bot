@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.orm import Session
 from app.models import Appointment
 from app.database import SessionLocal
-from app.whatsapp.client import send_reply_buttons
+from app.whatsapp.client import send_template_message
 from app.whatsapp.conversation import DIAS, MESES
 
 logger = logging.getLogger(__name__)
@@ -33,28 +33,33 @@ async def send_tomorrow_reminders():
             if not apt.client or not apt.client.phone or not apt.tenant:
                 continue
                 
-            service_name = apt.service.name if apt.service else "tu turno"
+            service_name = apt.service.name if apt.service else "Corte de pelo"
             phone = apt.client.phone
             tenant = apt.tenant
             
-            body = (f"⏰ *Recordatorio de {tenant.name}*\n\n"
-                    f"¡Hola! Te recordamos tu turno para mañana:\n"
-                    f"📅 {format_date(apt.date)}\n"
-                    f"🕐 {format_time(apt.time)}\n"
-                    f"✂️ {service_name}\n\n"
-                    f"Por favor confirmá si venís, o reprogramalo si no llegás.")
-            
-            buttons = [
-                {"id": f"confirm_apt_{apt.id}", "title": "✅ Confirmo"},
-                {"id": f"reschedule_apt_{apt.id}", "title": "🔄 Cambiar hora"},
-                {"id": f"cancel_apt_{apt.id}", "title": "❌ Cancelar"}
+            components = [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {"type": "text", "text": format_date(apt.date)},
+                        {"type": "text", "text": format_time(apt.time)},
+                        {"type": "text", "text": service_name}
+                    ]
+                }
             ]
             
             try:
-                await send_reply_buttons(phone, body, buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
-                logger.info(f"Recordatorio enviado a {phone} para turno {apt.id} ({tenant.name})")
+                await send_template_message(
+                    phone=phone,
+                    template_name="recordatorio_turno",
+                    language_code="es_AR",
+                    components=components,
+                    phone_number_id=tenant.wa_phone_number_id,
+                    access_token=tenant.wa_access_token
+                )
+                logger.info(f"Recordatorio con plantilla enviado a {phone} para turno {apt.id} ({tenant.name})")
             except Exception as e:
-                logger.error(f"Error enviando recordatorio a {phone}: {e}")
+                logger.error(f"Error enviando recordatorio con plantilla a {phone}: {e}")
                 
     except Exception as e:
         logger.error(f"Error general en send_tomorrow_reminders: {e}")
