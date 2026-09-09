@@ -78,6 +78,24 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
                 occupied_slots.add(current.time())
                 current += timedelta(minutes=slot_duration_minutes)
                 
+    # Slots ocupados por turnos fijos recurrentes
+    from app.models import RecurringAppointment
+    recurring = db.query(RecurringAppointment).filter(
+        RecurringAppointment.tenant_id == tenant_id,
+        RecurringAppointment.day_of_week == target_date.weekday(),
+        RecurringAppointment.active == True
+    ).all()
+    for rec in recurring:
+        rec_service = db.query(Service).filter(Service.id == rec.service_id).first()
+        if rec_service:
+            rec_duration = rec_service.duration_minutes
+            rec_start = datetime.combine(target_date, rec.time)
+            rec_end = rec_start + timedelta(minutes=rec_duration)
+            current = rec_start
+            while current < rec_end:
+                occupied_slots.add(current.time())
+                current += timedelta(minutes=slot_duration_minutes)
+                
     # Obtiene bloqueos parciales para el día
     partial_blocks = db.query(BlockedTime).filter(
         BlockedTime.tenant_id == tenant_id,

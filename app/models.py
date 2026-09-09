@@ -28,6 +28,7 @@ class Tenant(Base):
     services = relationship("Service", back_populates="tenant", cascade="all, delete-orphan")
     appointments = relationship("Appointment", back_populates="tenant", cascade="all, delete-orphan")
     blocked_times = relationship("BlockedTime", back_populates="tenant", cascade="all, delete-orphan")
+    recurring_appointments = relationship("RecurringAppointment", back_populates="tenant", cascade="all, delete-orphan")
 
 class BlockedTime(Base):
     """Modelo para excepciones y bloqueos de agenda por empresa."""
@@ -105,3 +106,20 @@ class ConversationState(Base):
         # Un solo estado por combinación tenant+phone
         {"sqlite_autoincrement": True},
     )
+
+class RecurringAppointment(Base):
+    """Turno fijo semanal recurrente."""
+    __tablename__ = "recurring_appointments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
+    client_name = Column(String, nullable=False)
+    client_phone = Column(String, default="")
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
+    day_of_week = Column(Integer, nullable=False)  # 0=Lunes ... 6=Domingo (Python weekday())
+    time = Column(Time, nullable=False)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    tenant = relationship("Tenant", back_populates="recurring_appointments")
+    service = relationship("Service")

@@ -247,6 +247,81 @@
             {% endfor %}
         </div>
     </div>
+
+    <div class="card" style="margin-top: 2rem;">
+        <h2 class="config-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 23l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+            Turnos Fijos Semanales
+        </h2>
+        <p style="margin-bottom: 1.5rem; font-size: 0.875rem;">Configurá turnos que se repiten todas las semanas automáticamente. El bot no va a ofrecer esos horarios.</p>
+
+        <form action="/admin/turnos/fijo" method="POST" style="margin-bottom: 2rem; background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Nombre del Cliente</label>
+                    <input type="text" name="client_name" required placeholder="Ej: Juan Pérez">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Teléfono (opcional)</label>
+                    <input type="tel" name="client_phone" placeholder="5493329...">
+                </div>
+                <div style="flex: 1; min-width: 130px;">
+                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Día de la semana</label>
+                    <select name="day_of_week" required>
+                        <option value="0">Lunes</option>
+                        <option value="1">Martes</option>
+                        <option value="2">Miércoles</option>
+                        <option value="3" selected>Jueves</option>
+                        <option value="4">Viernes</option>
+                        <option value="5">Sábado</option>
+                        <option value="6">Domingo</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 100px;">
+                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Hora</label>
+                    <input type="time" name="time" required>
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Servicio</label>
+                    <select name="service_id" required>
+                        {% for svc in services %}
+                        <option value="{{ svc.id }}">{{ svc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-outline" style="margin-top: 1rem;">+ Agregar Turno Fijo</button>
+        </form>
+
+        <div class="blocked-times-list">
+            {% if not recurring_appointments %}
+            <p style="text-align: center; color: var(--text-secondary); padding: 1rem;">No hay turnos fijos configurados.</p>
+            {% endif %}
+
+            {% set day_names = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] %}
+            {% for rec in recurring_appointments %}
+            <div class="blocked-card" style="{% if rec.active %}background: rgba(16, 185, 129, 0.05); border-left-color: #10b981;{% else %}opacity: 0.5;{% endif %}">
+                <div>
+                    <h4 style="margin-bottom: 0.25rem;">🔁 {{ rec.client_name }} — {{ day_names[rec.day_of_week] }} {{ rec.time.strftime('%H:%M') }}</h4>
+                    <p style="font-size: 0.875rem; color: {% if rec.active %}#6ee7b7{% else %}#fca5a5{% endif %};">
+                        {{ rec.service.name if rec.service else 'Servicio' }}
+                        {% if not rec.active %} — <strong>PAUSADO</strong>{% endif %}
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <form action="/admin/turnos/fijo/{{ rec.id }}/toggle" method="POST">
+                        <button type="submit" class="btn {% if rec.active %}btn-outline{% else %}btn-primary{% endif %}" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                            {% if rec.active %}Pausar{% else %}Activar{% endif %}
+                        </button>
+                    </form>
+                    <form action="/admin/turnos/fijo/{{ rec.id }}/delete" method="POST" onsubmit="return confirm('¿Eliminar este turno fijo?');">
+                        <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Eliminar</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 
 <script>

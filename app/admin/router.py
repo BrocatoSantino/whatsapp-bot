@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, date, timedelta, timezone
 
 from app.database import get_db
-from app.models import Appointment, Tenant, Service
+from app.models import Appointment, Tenant, Service, RecurringAppointment
 from app.services.appointment import get_appointments_by_date, cancel_appointment
 
 router = APIRouter()
@@ -124,6 +124,41 @@ async def dashboard(
         raw_appointments = get_mock_appointments(tenant.id, target_date=target_date)
     else:
         raw_appointments = get_appointments_by_date(db, target_date, tenant.id)
+        
+        # Auto-crear turnos de reglas recurrentes para este día
+        recurring_rules = db.query(RecurringAppointment).filter(
+            RecurringAppointment.tenant_id == tenant.id,
+            RecurringAppointment.day_of_week == target_date.weekday(),
+            RecurringAppointment.active == True
+        ).all()
+        
+        for rule in recurring_rules:
+            # Verificar si ya existe un appointment para esta regla en esta fecha
+            existing = db.query(Appointment).filter(
+                Appointment.tenant_id == tenant.id,
+                Appointment.date == target_date,
+                Appointment.time == rule.time,
+                Appointment.status.in_(['confirmed', 'pending', 'completed'])
+            ).first()
+            
+            if not existing:
+                from app.services.appointment import get_or_create_client
+                phone = rule.client_phone if rule.client_phone else f"fijo_{rule.id}"
+                client = get_or_create_client(db, phone, rule.client_name, tenant.id)
+                auto_apt = Appointment(
+                    tenant_id=tenant.id,
+                    client_id=client.id,
+                    service_id=rule.service_id,
+                    date=target_date,
+                    time=rule.time,
+                    status="confirmed"
+                )
+                db.add(auto_apt)
+                db.commit()
+        
+        # Re-fetch appointments after auto-creation
+        if recurring_rules:
+            raw_appointments = get_appointments_by_date(db, target_date, tenant.id)
     
     recaudacion = sum(app.service.price for app in raw_appointments if app.service and app.status in ['confirmed', 'pending', 'completed'])
     
@@ -268,6 +303,12 @@ async def configuracion_get(
         
     blocked_times = db.query(BlockedTime).filter(BlockedTime.tenant_id == tenant.id).order_by(BlockedTime.date.asc()).all()
     
+    recurring_appointments = db.query(RecurringAppointment).filter(
+        RecurringAppointment.tenant_id == tenant.id
+    ).order_by(RecurringAppointment.day_of_week, RecurringAppointment.time).all()
+    
+    services = db.query(Service).filter(Service.tenant_id == tenant.id, Service.active == True).all()
+    
     try:
         working_days = json.loads(tenant.working_days)
     except:
@@ -286,7 +327,9 @@ async def configuracion_get(
             "working_days": working_days,
             "business_shifts": business_shifts,
             "blocked_times": blocked_times,
-            "slot_duration": tenant.slot_duration_minutes
+            "slot_duration": tenant.slot_duration_minutes,
+            "recurring_appointments": recurring_appointments,
+            "services": services
         }
     )
 
@@ -504,3 +547,79 @@ async def delete_service(
         
     return RedirectResponse(url="/admin/servicios", status_code=303)
 
+
+# ---------------------------------------------------------------------------
+# Turnos Fijos (Recurrentes)
+# ---------------------------------------------------------------------------
+
+@router.post("/admin/turnos/fijo")
+async def add_recurring_appointment(
+    client_name: str = Form(...),
+    client_phone: str = Form(""),
+    service_id: int = Form(...),
+    day_of_week: int = Form(...),
+    time: str = Form(...),
+    db: Session = Depends(get_db),
+    tenant: Tenant | None = Depends(get_admin_session)
+):
+    if not tenant:
+        return RedirectResponse(url="/admin/login", status_code=303)
+    
+    try:
+        target_time = datetime.strptime(time, "%H:%M").time()
+        
+        recurring = RecurringAppointment(
+            tenant_id=tenant.id,
+            client_name=client_name.strip(),
+            client_phone=client_phone.strip(),
+            service_id=service_id,
+            day_of_week=day_of_week,
+            time=target_time,
+            active=True
+        )
+        db.add(recurring)
+        db.commit()
+    except Exception as e:
+        print(f"Error creando turno fijo: {e}")
+    
+    return RedirectResponse(url="/admin/configuracion", status_code=303)
+
+
+@router.post("/admin/turnos/fijo/{recurring_id}/toggle")
+async def toggle_recurring_appointment(
+    recurring_id: int,
+    db: Session = Depends(get_db),
+    tenant: Tenant | None = Depends(get_admin_session)
+):
+    if not tenant:
+        return RedirectResponse(url="/admin/login", status_code=303)
+    
+    recurring = db.query(RecurringAppointment).filter(
+        RecurringAppointment.id == recurring_id,
+        RecurringAppointment.tenant_id == tenant.id
+    ).first()
+    if recurring:
+        recurring.active = not recurring.active
+        db.commit()
+    
+    return RedirectResponse(url="/admin/configuracion", status_code=303)
+
+
+@router.post("/admin/turnos/fijo/{recurring_id}/delete")
+async def delete_recurring_appointment(
+    recurring_id: int,
+    db: Session = Depends(get_db),
+    tenant: Tenant | None = Depends(get_admin_session)
+):
+    if not tenant:
+        return RedirectResponse(url="/admin/login", status_code=303)
+    
+    recurring = db.query(RecurringAppointment).filter(
+        RecurringAppointment.id == recurring_id,
+        RecurringAppointment.tenant_id == tenant.id
+    ).first()
+    if recurring:
+        db.delete(recurring)
+        db.commit()
+    
+    return RedirectResponse(url="/admin/configuracion", status_code=303)
