@@ -98,6 +98,16 @@
         border-radius: 8px;
     }
 
+    .form-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        align-items: flex-end;
+    }
+    .form-col {
+        flex: 1;
+    }
+
     @media (max-width: 768px) {
         .shift-row {
             flex-direction: column;
@@ -202,25 +212,28 @@
         <p style="margin-bottom: 1.5rem; font-size: 0.875rem;">Agregá fechas en las que no vas a trabajar, o bloqueá horas específicas para que el bot no ofrezca turnos.</p>
         
         <form action="/admin/configuracion/block" method="POST" style="margin-bottom: 2rem; background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 150px;">
+            <div class="form-row">
+                <div class="form-col">
                     <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Fecha</label>
                     <input type="date" name="fecha" required>
                 </div>
-                <div style="flex: 1; min-width: 100px;">
-                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Hora Inicio (opcional)</label>
-                    <input type="time" name="start_time">
-                </div>
-                <div style="flex: 1; min-width: 100px;">
-                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Hora Fin (opcional)</label>
-                    <input type="time" name="end_time">
-                </div>
-                <div style="flex: 1; min-width: 150px;">
+                <div class="form-col">
                     <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Motivo (opcional)</label>
                     <input type="text" name="reason" placeholder="Ej: Feriado, Médico...">
                 </div>
             </div>
-            <button type="submit" class="btn btn-outline" style="margin-top: 1rem;">Bloquear Fecha</button>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Hora Inicio (opcional)</label>
+                    <input type="time" name="start_time">
+                </div>
+                <div class="form-col">
+                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Hora Fin (opcional)</label>
+                    <input type="time" name="end_time">
+                </div>
+                <button type="submit" class="btn btn-outline" style="height: 48px;">Bloquear Fecha</button>
+            </div>
         </form>
 
         <div class="blocked-times-list">
