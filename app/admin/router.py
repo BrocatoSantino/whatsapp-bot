@@ -303,10 +303,7 @@ async def configuracion_get(
         
     blocked_times = db.query(BlockedTime).filter(BlockedTime.tenant_id == tenant.id).order_by(BlockedTime.date.asc()).all()
     
-    recurring_appointments = db.query(RecurringAppointment).filter(
-        RecurringAppointment.tenant_id == tenant.id
-    ).order_by(RecurringAppointment.day_of_week, RecurringAppointment.time).all()
-    
+
     services = db.query(Service).filter(Service.tenant_id == tenant.id, Service.active == True).all()
     
     try:
@@ -328,7 +325,6 @@ async def configuracion_get(
             "business_shifts": business_shifts,
             "blocked_times": blocked_times,
             "slot_duration": tenant.slot_duration_minutes,
-            "recurring_appointments": recurring_appointments,
             "services": services
         }
     )
@@ -552,6 +548,31 @@ async def delete_service(
 # Turnos Fijos (Recurrentes)
 # ---------------------------------------------------------------------------
 
+@router.get("/admin/turnos_fijos", response_class=HTMLResponse)
+async def turnos_fijos_get(
+    request: Request,
+    db: Session = Depends(get_db),
+    tenant: Tenant | None = Depends(get_admin_session)
+):
+    if not tenant:
+        return RedirectResponse(url="/admin/login", status_code=303)
+        
+    recurring_appointments = db.query(RecurringAppointment).filter(
+        RecurringAppointment.tenant_id == tenant.id
+    ).order_by(RecurringAppointment.day_of_week, RecurringAppointment.time).all()
+    
+    services = db.query(Service).filter(Service.tenant_id == tenant.id, Service.active == True).all()
+    
+    return templates.TemplateResponse(
+        request=request,
+        name="turnos_fijos.html",
+        context={
+            "business_name": tenant.name,
+            "recurring_appointments": recurring_appointments,
+            "services": services
+        }
+    )
+
 @router.post("/admin/turnos/fijo")
 async def add_recurring_appointment(
     client_name: str = Form(...),
@@ -582,7 +603,7 @@ async def add_recurring_appointment(
     except Exception as e:
         print(f"Error creando turno fijo: {e}")
     
-    return RedirectResponse(url="/admin/configuracion", status_code=303)
+    return RedirectResponse(url="/admin/turnos_fijos", status_code=303)
 
 
 @router.post("/admin/turnos/fijo/{recurring_id}/toggle")
@@ -602,7 +623,7 @@ async def toggle_recurring_appointment(
         recurring.active = not recurring.active
         db.commit()
     
-    return RedirectResponse(url="/admin/configuracion", status_code=303)
+    return RedirectResponse(url="/admin/turnos_fijos", status_code=303)
 
 
 @router.post("/admin/turnos/fijo/{recurring_id}/delete")
@@ -622,4 +643,4 @@ async def delete_recurring_appointment(
         db.delete(recurring)
         db.commit()
     
-    return RedirectResponse(url="/admin/configuracion", status_code=303)
+    return RedirectResponse(url="/admin/turnos_fijos", status_code=303)
