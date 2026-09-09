@@ -102,7 +102,12 @@
                 </div>
                 <div style="flex: 1; min-width: 100px;">
                     <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Hora</label>
-                    <input type="time" name="time" required>
+                    <select name="time" required style="width: 100%; padding: 0.875rem 1rem; background-color: rgba(10,10,10,0.8); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); outline: none;">
+                        <option value="" disabled selected>Seleccionar...</option>
+                        {% for t in available_times %}
+                        <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div style="flex: 1; min-width: 150px;">
                     <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Servicio</label>
@@ -116,16 +121,25 @@
             <button type="submit" class="btn btn-outline" style="margin-top: 1rem;">+ Agregar Turno Fijo</button>
         </form>
 
-        <div class="blocked-times-list">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <h3 style="font-size: 1.1rem; margin: 0;">Turnos Configurados</h3>
+            
+            <div style="position: relative; max-width: 300px; width: 100%;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="searchInput" placeholder="Buscar por nombre, día o servicio..." onkeyup="filterTurnos()" style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; background-color: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; color: white; outline: none; font-size: 0.9rem;">
+            </div>
+        </div>
+
+        <div class="blocked-times-list" id="turnosList">
             {% if not recurring_appointments %}
             <p style="text-align: center; color: var(--text-secondary); padding: 1rem;">No hay turnos fijos configurados.</p>
             {% endif %}
 
             {% set day_names = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] %}
             {% for rec in recurring_appointments %}
-            <div class="blocked-card" style="{% if rec.active %}background: rgba(16, 185, 129, 0.05); border-left-color: #10b981;{% else %}opacity: 0.5;{% endif %}">
-                <div>
-                    <h4 style="margin-bottom: 0.25rem;">🔁 {{ rec.client_name }} — {{ day_names[rec.day_of_week] }} {{ rec.time.strftime('%H:%M') }}</h4>
+            <div class="blocked-card turno-fijo-item" style="{% if rec.active %}background: rgba(16, 185, 129, 0.05); border-left-color: #10b981;{% else %}opacity: 0.5;{% endif %}">
+                <div class="turno-info">
+                    <h4 style="margin-bottom: 0.25rem;">🔁 <span class="client-name">{{ rec.client_name }}</span> — <span class="day-time">{{ day_names[rec.day_of_week] }} {{ rec.time.strftime('%H:%M') }}</span></h4>
                     <p style="font-size: 0.875rem; color: {% if rec.active %}#6ee7b7{% else %}#fca5a5{% endif %};">
                         {{ rec.service.name if rec.service else 'Servicio' }}
                         {% if not rec.active %} — <strong>PAUSADO</strong>{% endif %}
@@ -146,4 +160,39 @@
         </div>
     </div>
 </div>
+
+<script>
+function filterTurnos() {
+    const input = document.getElementById("searchInput");
+    const filter = input.value.toLowerCase();
+    const list = document.getElementById("turnosList");
+    const items = list.getElementsByClassName("turno-fijo-item");
+    let visibleCount = 0;
+
+    for (let i = 0; i < items.length; i++) {
+        const textContent = items[i].querySelector(".turno-info").textContent || items[i].querySelector(".turno-info").innerText;
+        if (textContent.toLowerCase().indexOf(filter) > -1) {
+            items[i].style.display = "";
+            visibleCount++;
+        } else {
+            items[i].style.display = "none";
+        }
+    }
+    
+    // Check if we need to show the empty state
+    let emptyState = document.getElementById("emptyStateMessage");
+    if (visibleCount === 0 && items.length > 0) {
+        if (!emptyState) {
+            emptyState = document.createElement("p");
+            emptyState.id = "emptyStateMessage";
+            emptyState.style.cssText = "text-align: center; color: var(--text-secondary); padding: 1rem;";
+            emptyState.textContent = "No se encontraron resultados.";
+            list.appendChild(emptyState);
+        }
+        emptyState.style.display = "block";
+    } else if (emptyState) {
+        emptyState.style.display = "none";
+    }
+}
+</script>
 {% endblock %}

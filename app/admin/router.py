@@ -563,13 +563,40 @@ async def turnos_fijos_get(
     
     services = db.query(Service).filter(Service.tenant_id == tenant.id, Service.active == True).all()
     
+    # Calculate standard grid of available times
+    import json
+    from datetime import datetime, time, timedelta
+    try:
+        business_shifts = json.loads(tenant.business_shifts)
+    except:
+        business_shifts = []
+        
+    slot_duration = tenant.slot_duration_minutes
+    available_times = []
+    
+    dummy_date = datetime.now().date()
+    for shift in business_shifts:
+        start_h, start_m = map(int, shift["start"].split(":"))
+        end_h, end_m = map(int, shift["end"].split(":"))
+        
+        current = datetime.combine(dummy_date, time(start_h, start_m))
+        end_dt = datetime.combine(dummy_date, time(end_h, end_m))
+        
+        while current < end_dt:
+            available_times.append(current.strftime("%H:%M"))
+            current += timedelta(minutes=slot_duration)
+            
+    # Remove duplicates and sort
+    available_times = sorted(list(set(available_times)))
+    
     return templates.TemplateResponse(
         request=request,
         name="turnos_fijos.html",
         context={
             "business_name": tenant.name,
             "recurring_appointments": recurring_appointments,
-            "services": services
+            "services": services,
+            "available_times": available_times
         }
     )
 
