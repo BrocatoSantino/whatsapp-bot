@@ -1,5 +1,14 @@
 import httpx
 
+def normalize_phone(phone: str) -> str:
+    if not phone:
+        return ""
+    phone = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
+    # Para Argentina: Meta usa 54 + área + número (12 dígitos). Si viene 549... (13 dígitos), quitar el 9.
+    if phone.startswith("549") and len(phone) == 13:
+        return "54" + phone[3:]
+    return phone
+
 async def send_message(phone: str, text: str, phone_number_id: str, access_token: str):
     api_url = f"https://graph.facebook.com/v21.0/{phone_number_id}/messages"
     headers = {
@@ -9,7 +18,7 @@ async def send_message(phone: str, text: str, phone_number_id: str, access_token
     payload = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": phone,
+        "to": normalize_phone(phone),
         "type": "text",
         "text": {"preview_url": False, "body": text}
     }
@@ -27,7 +36,7 @@ async def send_reply_buttons(phone: str, body: str, buttons: list[dict], phone_n
     payload = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": phone,
+        "to": normalize_phone(phone),
         "type": "interactive",
         "interactive": {
             "type": "button",
@@ -60,7 +69,7 @@ async def send_list(phone: str, body: str, button_text: str, sections: list[dict
     payload = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": phone,
+        "to": normalize_phone(phone),
         "type": "interactive",
         "interactive": {
             "type": "list",
@@ -96,7 +105,7 @@ async def send_template_message(
     payload = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": phone,
+        "to": normalize_phone(phone),
         "type": "template",
         "template": {
             "name": template_name,
@@ -111,3 +120,4 @@ async def send_template_message(
         response = await client.post(api_url, json=payload, headers=headers)
         response.raise_for_status()
         return response.json()
+
