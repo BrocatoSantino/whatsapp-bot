@@ -113,6 +113,7 @@
         <p style="margin-bottom: 1.5rem; font-size: 0.875rem;">Configurá turnos que se repiten todas las semanas automáticamente. El bot no va a ofrecer esos horarios.</p>
 
         <form action="/admin/turnos/fijo" method="POST" style="margin-bottom: 2rem; background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
             <div class="form-row">
                 <div class="form-col">
                     <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Nombre del Cliente</label>
@@ -185,11 +186,13 @@
                 </div>
                 <div class="card-actions" style="display: flex; gap: 0.5rem;">
                     <form action="/admin/turnos/fijo/{{ rec.id }}/toggle" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
                         <button type="submit" class="btn {% if rec.active %}btn-outline{% else %}btn-primary{% endif %}" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
                             {% if rec.active %}Pausar{% else %}Activar{% endif %}
                         </button>
                     </form>
                     <form action="/admin/turnos/fijo/{{ rec.id }}/delete" method="POST" onsubmit="return confirm('¿Eliminar este turno fijo?');">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
                         <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Eliminar</button>
                     </form>
                 </div>

@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Estado de conversaciones en memoria
 # ---------------------------------------------------------------------------
-conversations: dict[tuple[int, str], dict] = {}
+from cachetools import TTLCache
+conversations = TTLCache(maxsize=10000, ttl=600)
 
 DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
 MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
@@ -74,7 +75,7 @@ def _get_db_state(db: Session, tenant_id: int, phone: str) -> ConversationState 
         ConversationState.phone == phone
     ).first()
 
-def get_conversation(tenant_id: int, phone: str) -> dict:
+def get_conversation(db: Session, tenant_id: int, phone: str) -> dict:
     now = datetime.datetime.now(ar_tz).replace(tzinfo=None)
     
     # 1) Intentar leer de caché en memoria (rápido)
@@ -82,13 +83,12 @@ def get_conversation(tenant_id: int, phone: str) -> dict:
     if key in conversations:
         conv = conversations[key]
         if now - conv["last_activity"] > datetime.timedelta(minutes=10):
-            reset_conversation(tenant_id, phone)
+            reset_conversation(db, tenant_id, phone)
         else:
             conv["last_activity"] = now
             return conv
     
     # 2) Si no está en memoria, buscar en la base de datos
-    db = SessionLocal()
     try:
         db_state = _get_db_state(db, tenant_id, phone)
         if db_state and (now - db_state.last_activity) <= datetime.timedelta(minutes=10):
@@ -99,8 +99,8 @@ def get_conversation(tenant_id: int, phone: str) -> dict:
             }
             conversations[key] = conv
             return conv
-    finally:
-        db.close()
+    except Exception as e:
+        logger.error(f"Error leyendo estado de base de datos: {e}")
     
     # 3) Si no existe en ningún lado, crear nuevo
     conversations[key] = {
@@ -110,7 +110,7 @@ def get_conversation(tenant_id: int, phone: str) -> dict:
     }
     return conversations[key]
 
-def update_conversation(tenant_id: int, phone: str, state: str, data: dict = None):
+def update_conversation(db: Session, tenant_id: int, phone: str, state: str, data: dict = None):
     now = datetime.datetime.now(ar_tz).replace(tzinfo=None)
     key = (tenant_id, phone)
     
@@ -124,7 +124,6 @@ def update_conversation(tenant_id: int, phone: str, state: str, data: dict = Non
         conversations[key]["last_activity"] = now
     
     # Persistir en base de datos
-    db = SessionLocal()
     try:
         db_state = _get_db_state(db, tenant_id, phone)
         if db_state:
@@ -145,21 +144,16 @@ def update_conversation(tenant_id: int, phone: str, state: str, data: dict = Non
     except Exception as e:
         logger.error(f"Error persistiendo estado de conversación: {e}")
         db.rollback()
-    finally:
-        db.close()
 
-def reset_conversation(tenant_id: int, phone: str):
+def reset_conversation(db: Session, tenant_id: int, phone: str):
     now = datetime.datetime.now(ar_tz).replace(tzinfo=None)
     key = (tenant_id, phone)
     
     # Resetear caché en memoria
     if key in conversations:
-        conversations[key]["state"] = "IDLE"
-        conversations[key]["data"] = {}
-        conversations[key]["last_activity"] = now
+        del conversations[key]
     
     # Resetear en base de datos
-    db = SessionLocal()
     try:
         db_state = _get_db_state(db, tenant_id, phone)
         if db_state:
@@ -170,8 +164,6 @@ def reset_conversation(tenant_id: int, phone: str):
     except Exception as e:
         logger.error(f"Error reseteando estado de conversación: {e}")
         db.rollback()
-    finally:
-        db.close()
 
 # ---------------------------------------------------------------------------
 # Handler principal
@@ -193,17 +185,17 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
 
         # --- Volver al menú (funciona desde cualquier estado) ---
         if msg in MENU_KEYWORDS:
-            reset_conversation(tenant.id, phone)
+            reset_conversation(db, tenant.id, phone)
 
         # --- Acciones directas (botones de recordatorio / cancelar flujo) ---
         if msg == "cancel_flow" or msg == "cancelar reserva":
             await send_message(phone, "🚫 Reserva cancelada. Escribí *menu* si necesitás algo más.", tenant.wa_phone_number_id, tenant.wa_access_token)
-            reset_conversation(tenant.id, phone)
+            reset_conversation(db, tenant.id, phone)
             return
 
         if msg.startswith("confirm_apt_"):
             await send_message(phone, "✅ ¡Genial! Te esperamos mañana. ¡Gracias por confirmar! 💈", tenant.wa_phone_number_id, tenant.wa_access_token)
-            reset_conversation(tenant.id, phone)
+            reset_conversation(db, tenant.id, phone)
             return
 
         if msg.startswith("cancel_apt_"):
@@ -216,7 +208,7 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
                     await send_message(phone, "No pudimos cancelar el turno 😕 Escribí *menu*.", tenant.wa_phone_number_id, tenant.wa_access_token)
             except Exception:
                 pass
-            reset_conversation(tenant.id, phone)
+            reset_conversation(db, tenant.id, phone)
             return
 
         if msg.startswith("reschedule_apt_"):
@@ -225,32 +217,35 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
                 success = cancel_appointment(db, apt_id, phone, tenant.id)
                 if success:
                     await send_message(phone, "🔄 Ok, cancelamos el de mañana. Vamos a reprogramarlo:", tenant.wa_phone_number_id, tenant.wa_access_token)
-                    update_conversation(tenant.id, phone, "MENU")
-                    await _handle_menu(phone, "sacar_turno", get_conversation(tenant.id, phone), db, tenant)
+                    update_conversation(db, tenant.id, phone, "MENU")
+                    await _handle_menu(phone, "sacar_turno", get_conversation(db, tenant.id, phone), db, tenant)
                     return
                 else:
                     await send_message(phone, "No pudimos reprogramar el turno 😕 Escribí *menu*.", tenant.wa_phone_number_id, tenant.wa_access_token)
             except Exception:
                 pass
-            reset_conversation(tenant.id, phone)
+            reset_conversation(db, tenant.id, phone)
             return
 
-        conv = get_conversation(tenant.id, phone)
+        conv = get_conversation(db, tenant.id, phone)
         state = conv["state"]
+        
+        if state == "HANDOFF":
+            return
 
         get_or_create_client(db, phone, name, tenant.id)
 
         if state == "IDLE":
             # Aceptar acciones directas desde botones de confirmación previos
             if msg in ("sacar_turno", "1"):
-                update_conversation(tenant.id, phone, "MENU")
-                await _handle_menu(phone, msg, get_conversation(tenant.id, phone), db, tenant)
+                update_conversation(db, tenant.id, phone, "MENU")
+                await _handle_menu(phone, msg, get_conversation(db, tenant.id, phone), db, tenant)
             elif msg in ("mis_turnos", "2"):
-                update_conversation(tenant.id, phone, "MENU")
-                await _handle_menu(phone, msg, get_conversation(tenant.id, phone), db, tenant)
+                update_conversation(db, tenant.id, phone, "MENU")
+                await _handle_menu(phone, msg, get_conversation(db, tenant.id, phone), db, tenant)
             elif msg in ("cancelar_turno", "cancelar", "3"):
-                update_conversation(tenant.id, phone, "MENU")
-                await _handle_menu(phone, msg, get_conversation(tenant.id, phone), db, tenant)
+                update_conversation(db, tenant.id, phone, "MENU")
+                await _handle_menu(phone, msg, get_conversation(db, tenant.id, phone), db, tenant)
             else:
                 await _handle_idle(phone, name, db, tenant)
 
@@ -267,7 +262,7 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
         elif state == "CANCEL_CHOOSING":
             await _handle_cancel(phone, msg, conv, db, tenant)
         else:
-            reset_conversation(tenant.id, phone)
+            reset_conversation(db, tenant.id, phone)
             await _handle_idle(phone, name, db, tenant)
 
     except Exception as e:
@@ -276,7 +271,7 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
             await send_message(phone, "❌ ¡Ups! Hubo un error. Escribí *menu* para volver a empezar.", tenant.wa_phone_number_id, tenant.wa_access_token)
         except Exception:
             logger.error(f"No se pudo enviar mensaje de error a {phone}")
-        reset_conversation(tenant.id, phone)
+        reset_conversation(db, tenant.id, phone)
 
 # ---------------------------------------------------------------------------
 # IDLE → Mostrar menú con botones
@@ -296,7 +291,7 @@ async def _handle_idle(phone: str, name: str, db: Session, tenant: Tenant):
         {"id": "cancelar_turno", "title": "❌ Cancelar turno"},
     ]
     await send_reply_buttons(phone, body, buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
-    update_conversation(tenant.id, phone, "MENU")
+    update_conversation(db, tenant.id, phone, "MENU")
 
 # ---------------------------------------------------------------------------
 # MENU → Elegir acción
@@ -309,7 +304,7 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session, tenant
         services = get_all_services(db, tenant.id)
         if not services:
             await send_message(phone, "No hay servicios disponibles ahora mismo 😕\nEscribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
-            reset_conversation(tenant.id, phone)
+            reset_conversation(db, tenant.id, phone)
             return
 
         if len(services) == 1:
@@ -347,7 +342,7 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session, tenant
                 tenant.wa_phone_number_id,
                 tenant.wa_access_token
             )
-            update_conversation(tenant.id, phone, "CHOOSING_SERVICE", {"services": services_data})
+            update_conversation(db, tenant.id, phone, "CHOOSING_SERVICE", {"services": services_data})
 
     # ---- MIS TURNOS ----
     elif message in ("mis_turnos", "2"):
@@ -360,14 +355,14 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session, tenant
                 lines.append(f"• {format_date(apt.date)} a las {format_time(apt.time)} - {apt.service.name}")
             lines.append("\n_Escribí *menu* para volver._")
             await send_message(phone, "\n".join(lines), tenant.wa_phone_number_id, tenant.wa_access_token)
-        reset_conversation(tenant.id, phone)
+        reset_conversation(db, tenant.id, phone)
 
     # ---- CANCELAR ----
     elif message in ("cancelar_turno", "cancelar", "3"):
         appointments = get_client_appointments(db, phone, tenant.id)
         if not appointments:
             await send_message(phone, "No tenés turnos para cancelar 📭\n\n_Escribí *menu* para volver._", tenant.wa_phone_number_id, tenant.wa_access_token)
-            reset_conversation(tenant.id, phone)
+            reset_conversation(db, tenant.id, phone)
             return
 
         rows = []
@@ -383,7 +378,7 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session, tenant
 
         sections = [{"title": "Tus turnos", "rows": rows}]
         await send_list(phone, "❌ *¿Cuál turno querés cancelar?*", "Ver turnos", sections, tenant.wa_phone_number_id, tenant.wa_access_token)
-        update_conversation(tenant.id, phone, "CANCEL_CHOOSING", {"appointments": cancel_data})
+        update_conversation(db, tenant.id, phone, "CANCEL_CHOOSING", {"appointments": cancel_data})
 
     else:
         await send_message(phone, "No entendí 🤔 Tocá un botón o escribí *menu* para ver las opciones.", tenant.wa_phone_number_id, tenant.wa_access_token)
@@ -430,7 +425,7 @@ async def _send_date_list(phone: str, service_id: int, service_name: str, servic
     dates = get_available_dates(db, tenant.id, days_ahead=7)
     if not dates:
         await send_message(phone, "No hay fechas disponibles en los próximos días 😕\nEscribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
-        reset_conversation(tenant.id, phone)
+        reset_conversation(db, tenant.id, phone)
         return
 
     today = datetime.datetime.now(ar_tz).date()
@@ -474,7 +469,7 @@ async def _send_date_list(phone: str, service_id: int, service_name: str, servic
         "service_price": service_price_fmt,
         "dates": dates_data,
     }
-    update_conversation(tenant.id, phone, "CHOOSING_DATE", data)
+    update_conversation(db, tenant.id, phone, "CHOOSING_DATE", data)
 
 # ---------------------------------------------------------------------------
 # CHOOSING_DATE → Elegir día
@@ -564,7 +559,7 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
         "slots": slots_data
     })
     
-    update_conversation(tenant.id, phone, "CHOOSING_PART_OF_DAY", data)
+    update_conversation(db, tenant.id, phone, "CHOOSING_PART_OF_DAY", data)
     await send_list(
         phone, 
         f"📅 *{format_date(chosen_date)}*\n\n¿En qué momento del día preferís el turno?", 
@@ -626,7 +621,7 @@ async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db:
     # para que en el próximo paso valide correctamente solo estos
     data = conv["data"].copy()
     data["filtered_slots"] = filtered_slots
-    update_conversation(tenant.id, phone, "CHOOSING_TIME", data)
+    update_conversation(db, tenant.id, phone, "CHOOSING_TIME", data)
 
     await send_list(
         phone,
@@ -727,10 +722,11 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
         else:
             logger.warning("owner_phone está vacío. No se envía notificación al dueño.")
                 
-        reset_conversation(tenant.id, phone)
+        reset_conversation(db, tenant.id, phone)
     else:
-        await send_message(phone, "Ups, ese horario ya no está disponible 😕\nEscribí *menu* para intentar de nuevo.", tenant.wa_phone_number_id, tenant.wa_access_token)
-        reset_conversation(tenant.id, phone)
+        await send_message(phone, "¡Uy! 😅 Alguien reservó ese mismo horario recién.\nElegí otro horario de esta franja por favor.", tenant.wa_phone_number_id, tenant.wa_access_token)
+        update_conversation(db, tenant.id, phone, "CHOOSING_PART_OF_DAY", conv["data"])
+        await _handle_choosing_part_of_day(phone, "back_to_part_of_day", conv, db, tenant)
 
 # ---------------------------------------------------------------------------
 # CANCEL_CHOOSING → Cancelar un turno
@@ -773,7 +769,7 @@ async def _handle_cancel(phone: str, message: str, conv: dict, db: Session, tena
     else:
         await send_message(phone, "No se pudo cancelar el turno 😕\nEscribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
 
-    reset_conversation(tenant.id, phone)
+    reset_conversation(db, tenant.id, phone)
 
 # ---------------------------------------------------------------------------
 # HUMAN HANDOFF → Avisar al dueño
@@ -822,4 +818,4 @@ async def _handle_human_handoff(phone: str, name: str, tenant: Tenant):
             except Exception as ex:
                 logger.error(f"Fallback texto a dueño falló: {ex}")
 
-    reset_conversation(tenant.id, phone)
+    update_conversation(db, tenant.id, phone, "HANDOFF")

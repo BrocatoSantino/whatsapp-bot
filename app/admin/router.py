@@ -10,8 +10,10 @@ from app.services.appointment import get_appointments_by_date, cancel_appointmen
 
 router = APIRouter()
 import os
+import secrets
 current_dir = os.path.dirname(os.path.realpath(__file__))
 templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
+templates.env.globals["get_csrf_token"] = lambda request: request.session.get("csrf_token", "")
 
 def get_mock_appointments(tenant_id, target_date=None, start_date=None, end_date=None):
     from app.models import Client, Service
@@ -52,50 +54,80 @@ def get_mock_appointments(tenant_id, target_date=None, start_date=None, end_date
     mock_apps.sort(key=lambda x: (x.date, x.time))
     return mock_apps
 
-def get_admin_session(admin_session: str | None = Cookie(default=None), db: Session = Depends(get_db)) -> Tenant | None:
-    if not admin_session:
+import secrets
+from fastapi import HTTPException
+
+def get_admin_session(request: Request, db: Session = Depends(get_db)) -> Tenant | None:
+    if "csrf_token" not in request.session:
+        request.session["csrf_token"] = secrets.token_hex(16)
+        
+    tenant_id = request.session.get("tenant_id")
+    if not tenant_id:
         return None
-    try:
-        tenant_id, pwd_hash = admin_session.split(":")
-        tenant = db.query(Tenant).filter(Tenant.id == int(tenant_id)).first()
-        if tenant and tenant.password_hash == pwd_hash:
-            return tenant
-    except Exception:
-        pass
-    return None
+    return db.query(Tenant).filter(Tenant.id == tenant_id).first()
+
+def verify_csrf(request: Request, csrf_token: str = Form(...)):
+    expected_token = request.session.get("csrf_token")
+    if not expected_token or not secrets.compare_digest(expected_token, csrf_token):
+        raise HTTPException(status_code=403, detail="Invalid CSRF Token")
 
 @router.get("/admin/login", response_class=HTMLResponse)
 async def login_get(request: Request, tenant: Tenant | None = Depends(get_admin_session)):
     if tenant:
         return RedirectResponse(url="/admin", status_code=303)
+        
+    csrf_token = secrets.token_hex(16)
+    request.session["csrf_token"] = csrf_token
+    
     return templates.TemplateResponse(
-        request=request, name="login.html", context={"error": False, "business_name": "TurnoFlow", "hide_navbar": True}
+        request=request, name="login.html", context={"error": False, "business_name": "TurnoFlow", "hide_navbar": True, "csrf_token": csrf_token}
     )
+
+login_attempts = {}
+import time
 
 @router.post("/admin/login", response_class=HTMLResponse)
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    
+    # Limpiar intentos viejos (último minuto)
+    if client_ip in login_attempts:
+        login_attempts[client_ip] = [t for t in login_attempts[client_ip] if now - t < 60]
+    else:
+        login_attempts[client_ip] = []
+        
+    if len(login_attempts[client_ip]) >= 5:
+        csrf_token = secrets.token_hex(16)
+        request.session["csrf_token"] = csrf_token
+        return templates.TemplateResponse(
+            request=request, name="login.html", context={"error": True, "error_msg": "Demasiados intentos fallidos. Esperá 1 minuto.", "business_name": "TurnoFlow", "hide_navbar": True, "csrf_token": csrf_token}
+        )
+        
+    login_attempts[client_ip].append(now)
+
+    # Note: verify_csrf is NOT used on login_post to avoid chicken/egg problem for users with expired sessions.
+    # We just generate a new token on successful login.
     tenant = db.query(Tenant).filter(Tenant.username == username).first()
     if tenant and tenant.password_hash == password:
-        response = RedirectResponse(url="/admin", status_code=303)
-        response.set_cookie(
-            key="admin_session", 
-            value=f"{tenant.id}:{tenant.password_hash}", 
-            httponly=True, 
-            secure=True, 
-            samesite="strict",
-            max_age=31536000
-        )
-        return response
+        request.session["tenant_id"] = tenant.id
+        request.session["csrf_token"] = secrets.token_hex(16)
+        # Limpiar intentos exitosos
+        login_attempts.pop(client_ip, None)
+        return RedirectResponse(url="/admin", status_code=303)
+    
+    # Generate new token for retry
+    csrf_token = secrets.token_hex(16)
+    request.session["csrf_token"] = csrf_token
     
     return templates.TemplateResponse(
-        request=request, name="login.html", context={"error": True, "business_name": "TurnoFlow", "hide_navbar": True}
+        request=request, name="login.html", context={"error": True, "error_msg": "Usuario o contraseña incorrectos", "business_name": "TurnoFlow", "hide_navbar": True, "csrf_token": csrf_token}
     )
 
 @router.get("/admin/logout")
-async def logout():
-    response = RedirectResponse(url="/admin/login", status_code=303)
-    response.delete_cookie("admin_session")
-    return response
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/admin/login", status_code=303)
 
 MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
@@ -209,7 +241,8 @@ async def update_appointment_status(
     appointment_id: int, 
     status: str = Form(...),
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
@@ -217,12 +250,16 @@ async def update_appointment_status(
     if status not in ['pending', 'completed', 'no_show', 'cancelled']:
         return RedirectResponse(url="/admin", status_code=303)
         
-    appointment = db.query(Appointment).filter(Appointment.id == appointment_id, Appointment.tenant_id == tenant.id).first()
-    if appointment:
-        appointment.status = status
-        db.commit()
+    try:
+        appointment = db.query(Appointment).filter(Appointment.id == appointment_id, Appointment.tenant_id == tenant.id).first()
+        if appointment:
+            appointment.status = status
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating status: {e}")
     
-    return RedirectResponse(url=f"/admin?fecha={appointment.date.strftime('%Y-%m-%d')}" if appointment else "/admin", status_code=303)
+    return RedirectResponse(url=f"/admin?fecha={appointment.date.strftime('%Y-%m-%d')}" if 'appointment' in locals() and appointment else "/admin", status_code=303)
 
 @router.get("/admin/historial", response_class=HTMLResponse)
 async def historial(
@@ -336,7 +373,8 @@ async def update_horarios(
     business_shifts: str = Form(...),
     slot_duration: int = Form(...),
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
@@ -352,6 +390,7 @@ async def update_horarios(
             tenant.slot_duration_minutes = slot_duration
         db.commit()
     except Exception as e:
+        db.rollback()
         print(f"Error parseando horarios: {e}")
         
     return RedirectResponse(url="/admin/configuracion", status_code=303)
@@ -364,7 +403,8 @@ async def add_block(
     end_time: str = Form(None),
     reason: str = Form(None),
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
@@ -384,6 +424,7 @@ async def add_block(
         db.add(block)
         db.commit()
     except Exception as e:
+        db.rollback()
         print(f"Error guardando bloqueo: {e}")
         
     return RedirectResponse(url="/admin/configuracion", status_code=303)
@@ -392,15 +433,20 @@ async def add_block(
 async def delete_block(
     block_id: int,
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
         
-    block = db.query(BlockedTime).filter(BlockedTime.id == block_id, BlockedTime.tenant_id == tenant.id).first()
-    if block:
-        db.delete(block)
-        db.commit()
+    try:
+        block = db.query(BlockedTime).filter(BlockedTime.id == block_id, BlockedTime.tenant_id == tenant.id).first()
+        if block:
+            db.delete(block)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Error deleting block: {e}")
         
     return RedirectResponse(url="/admin/configuracion", status_code=303)
 
@@ -434,7 +480,8 @@ async def add_manual_appointment(
     date: str = Form(...),
     time: str = Form(...),
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
@@ -450,6 +497,7 @@ async def add_manual_appointment(
             
         create_appointment(db, phone, client_name, service_id, target_date, target_time, tenant.id)
     except Exception as e:
+        db.rollback()
         print(f"Error creating manual appointment: {e}")
         
     return RedirectResponse(url=f"/admin?fecha={date}", status_code=303)
@@ -479,7 +527,8 @@ async def add_service(
     name: str = Form(...),
     price: float = Form(...),
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
@@ -495,6 +544,7 @@ async def add_service(
         db.add(new_service)
         db.commit()
     except Exception as e:
+        db.rollback()
         print(f"Error creating service: {e}")
         
     return RedirectResponse(url="/admin/servicios", status_code=303)
@@ -506,7 +556,8 @@ async def edit_service(
     price: float = Form(...),
     active: str = Form(None),
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
@@ -520,6 +571,7 @@ async def edit_service(
             service.active = active == "true"
             db.commit()
     except Exception as e:
+        db.rollback()
         print(f"Error editing service: {e}")
         
     return RedirectResponse(url="/admin/servicios", status_code=303)
@@ -528,7 +580,8 @@ async def edit_service(
 async def delete_service(
     service_id: int,
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
@@ -536,9 +589,10 @@ async def delete_service(
     try:
         service = db.query(Service).filter(Service.id == service_id, Service.tenant_id == tenant.id).first()
         if service:
-            db.delete(service)
+            service.active = False
             db.commit()
     except Exception as e:
+        db.rollback()
         print(f"Error deleting service: {e}")
         
     return RedirectResponse(url="/admin/servicios", status_code=303)
@@ -608,7 +662,8 @@ async def add_recurring_appointment(
     day_of_week: int = Form(...),
     time: str = Form(...),
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
@@ -628,6 +683,7 @@ async def add_recurring_appointment(
         db.add(recurring)
         db.commit()
     except Exception as e:
+        db.rollback()
         print(f"Error creando turno fijo: {e}")
     
     return RedirectResponse(url="/admin/turnos_fijos", status_code=303)
@@ -637,18 +693,23 @@ async def add_recurring_appointment(
 async def toggle_recurring_appointment(
     recurring_id: int,
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
     
-    recurring = db.query(RecurringAppointment).filter(
-        RecurringAppointment.id == recurring_id,
-        RecurringAppointment.tenant_id == tenant.id
-    ).first()
-    if recurring:
-        recurring.active = not recurring.active
-        db.commit()
+    try:
+        recurring = db.query(RecurringAppointment).filter(
+            RecurringAppointment.id == recurring_id,
+            RecurringAppointment.tenant_id == tenant.id
+        ).first()
+        if recurring:
+            recurring.active = not recurring.active
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Error toggling recurring appointment: {e}")
     
     return RedirectResponse(url="/admin/turnos_fijos", status_code=303)
 
@@ -657,17 +718,22 @@ async def toggle_recurring_appointment(
 async def delete_recurring_appointment(
     recurring_id: int,
     db: Session = Depends(get_db),
-    tenant: Tenant | None = Depends(get_admin_session)
+    tenant: Tenant | None = Depends(get_admin_session),
+    csrf: None = Depends(verify_csrf)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
     
-    recurring = db.query(RecurringAppointment).filter(
-        RecurringAppointment.id == recurring_id,
-        RecurringAppointment.tenant_id == tenant.id
-    ).first()
-    if recurring:
-        db.delete(recurring)
-        db.commit()
+    try:
+        recurring = db.query(RecurringAppointment).filter(
+            RecurringAppointment.id == recurring_id,
+            RecurringAppointment.tenant_id == tenant.id
+        ).first()
+        if recurring:
+            db.delete(recurring)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Error deleting recurring appointment: {e}")
     
     return RedirectResponse(url="/admin/turnos_fijos", status_code=303)

@@ -18,6 +18,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
+from starlette.middleware.sessions import SessionMiddleware
+import os
+app.add_middleware(SessionMiddleware, secret_key=os.environ.get("SECRET_KEY", "turbosecret12345"))
+
 # Montar routers
 app.include_router(webhook_router)
 app.include_router(admin_router)

@@ -90,6 +90,9 @@ class Appointment(Base):
     client = relationship("Client", back_populates="appointments")
     service = relationship("Service", back_populates="appointments")
 
+from sqlalchemy import Index
+Index('idx_tenant_date_status', Appointment.tenant_id, Appointment.date, Appointment.status)
+
 
 class ConversationState(Base):
     """Estado de conversación del bot, persistido en base de datos para sobrevivir reinicios serverless."""

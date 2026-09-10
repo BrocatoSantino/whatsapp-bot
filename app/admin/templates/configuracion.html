@@ -40,11 +40,12 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        background: rgba(255,255,255,0.03);
+        background: rgba(255,255,255,0.02);
         padding: 0.5rem 1rem;
         border-radius: 8px;
         border: 1px solid var(--border);
         cursor: pointer;
+        transition: all 0.2s ease;
     }
 
     .checkbox-label:hover {
@@ -60,9 +61,11 @@
         gap: 1rem;
         align-items: flex-end;
         margin-bottom: 1rem;
-        padding: 1rem;
-        background: rgba(0,0,0,0.3);
-        border-radius: 8px;
+        padding: 1.25rem;
+        background: rgba(20, 20, 20, 0.4);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 12px;
         border: 1px solid var(--border);
     }
     
@@ -92,10 +95,13 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1rem 1.5rem;
+        padding: 1.25rem 1.5rem;
         background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.15);
         border-left: 4px solid var(--danger);
-        border-radius: 8px;
+        border-radius: 12px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .form-row {
@@ -147,6 +153,7 @@
         </h2>
         
         <form action="/admin/configuracion/horarios" method="POST" id="horariosForm">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
             <div class="form-group">
                 <label>Días laborales de la semana</label>
                 <div class="checkbox-group">
@@ -212,6 +219,7 @@
         <p style="margin-bottom: 1.5rem; font-size: 0.875rem;">Agregá fechas en las que no vas a trabajar, o bloqueá horas específicas para que el bot no ofrezca turnos.</p>
         
         <form action="/admin/configuracion/block" method="POST" style="margin-bottom: 2rem; background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
             <div class="form-row">
                 <div class="form-col">
                     <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Fecha</label>
@@ -254,6 +262,7 @@
                     </p>
                 </div>
                 <form action="/admin/configuracion/block/{{ block.id }}/delete" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
                     <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Eliminar</button>
                 </form>
             </div>

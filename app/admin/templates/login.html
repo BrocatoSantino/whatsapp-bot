@@ -95,10 +95,11 @@
         </div>
         
         {% if error %}
-        <div class="error-msg">Usuario o contraseña incorrecta. Intenta nuevamente.</div>
+        <div class="error-msg">{{ error_msg if error_msg else "Usuario o contraseña incorrecta. Intenta nuevamente." }}</div>
         {% endif %}
         
         <form action="/admin/login" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
             <div class="form-group">
                 <label for="username">Usuario de la Empresa</label>
                 <input type="text" id="username" name="username" required autofocus placeholder="Ej. la_barberia">

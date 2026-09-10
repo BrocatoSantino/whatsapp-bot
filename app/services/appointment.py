@@ -23,9 +23,14 @@ def create_appointment(db: Session, phone: str, name: str, service_id: int, apt_
     if not service:
         return None
         
+    # Bloqueo pesimista: lockear el tenant durante esta transacción para evitar "doble reserva"
+    from app.models import Tenant
+    db.query(Tenant).filter(Tenant.id == tenant_id).with_for_update().first()
+        
     # Doble chequeo de concurrencia: verificar si el turno sigue disponible
     available_slots = get_available_slots(db, apt_date, service_id, tenant_id)
     if apt_time not in available_slots:
+        db.rollback() # Liberar el lock
         return None
         
     client = get_or_create_client(db, phone, name, tenant_id)

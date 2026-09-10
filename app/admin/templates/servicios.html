@@ -27,9 +27,11 @@
     }
 
     .service-card {
-        background: rgba(255,255,255,0.02);
+        background: rgba(20, 20, 20, 0.4);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 1.5rem;
         margin-bottom: 1rem;
         display: flex;
@@ -39,7 +41,10 @@
     }
 
     .service-card:hover {
-        background: rgba(255,255,255,0.05);
+        background: rgba(30, 30, 30, 0.6);
+        border-color: var(--border-hover);
+        transform: translateY(-2px);
+        box-shadow: var(--glow-subtle);
     }
 
     .service-info h3 {
@@ -164,6 +169,7 @@
         </h2>
         
         <form action="/admin/servicios/nuevo" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
             <div class="form-row">
                 <div class="form-col" style="flex: 2;">
                     <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Nombre del Servicio</label>
@@ -210,6 +216,7 @@
                     <div class="service-actions">
                         <button type="button" class="btn btn-outline" onclick="toggleEdit({{ service.id }})" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Editar</button>
                         <form action="/admin/servicios/{{ service.id }}/eliminar" method="POST" style="margin: 0;" onsubmit="return confirm('¿Estás seguro de que querés eliminar este servicio?');">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
                             <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Eliminar</button>
                         </form>
                     </div>
@@ -217,6 +224,7 @@
 
                 <!-- Edit Mode -->
                 <form action="/admin/servicios/{{ service.id }}/editar" method="POST" class="edit-form" id="edit-form-{{ service.id }}">
+    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
                     <div class="form-row" style="width: 100%; margin-bottom: 0;">
                         <div class="form-col" style="flex: 2;">
                             <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Nombre</label>
