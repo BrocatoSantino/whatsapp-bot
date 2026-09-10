@@ -650,7 +650,7 @@ async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db:
             "title": format_time(t)
         })
         
-    rows.append({"id": "cancel_flow", "title": "⬅️ Volver"})
+    rows.append({"id": "back_to_part_of_day", "title": "⬅️ Volver"})
 
     sections = [{"title": "Horarios disponibles", "rows": rows}]
     chosen_date_iso = conv["data"].get("chosen_date")
@@ -675,6 +675,12 @@ async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db:
 # ---------------------------------------------------------------------------
 
 async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict, db: Session, tenant: Tenant):
+    if message == "back_to_part_of_day":
+        chosen_date_iso = conv["data"].get("chosen_date")
+        if chosen_date_iso:
+            await _handle_choosing_date(phone, f"date_{chosen_date_iso}", conv, db, tenant)
+        return
+
     slots_data = conv["data"].get("filtered_slots", conv["data"].get("slots", []))
     chosen_time = None
 
