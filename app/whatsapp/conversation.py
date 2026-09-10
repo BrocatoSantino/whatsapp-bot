@@ -260,6 +260,8 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
             await _handle_choosing_service(phone, msg, conv, db, tenant)
         elif state == "CHOOSING_DATE":
             await _handle_choosing_date(phone, msg, conv, db, tenant)
+        elif state == "CHOOSING_PART_OF_DAY":
+            await _handle_choosing_part_of_day(phone, msg, conv, db, tenant)
         elif state == "CHOOSING_TIME":
             await _handle_choosing_time(phone, name, msg, conv, db, tenant)
         elif state == "CANCEL_CHOOSING":
@@ -553,69 +555,138 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
             f"Elegí otro día o escribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
         return
 
-    # Armar texto con los horarios disponibles
-    slots_data = []
-    msg_lines = [f"🕐 *Horarios para el {format_date(chosen_date)}*\n"]
+    slots_data = [t.isoformat() for t in slots]
+
+    manana = [t for t in slots if t.hour < 13]
+    tarde = [t for t in slots if 13 <= t.hour < 18]
+    noche = [t for t in slots if t.hour >= 18]
+
+    rows = []
+    if manana:
+        start_fmt = format_time(min(manana))
+        end_fmt = format_time(max(manana))
+        rows.append({
+            "id": "part_manana",
+            "title": "🌅 Mañana",
+            "description": f"De {start_fmt} a {end_fmt}"
+        })
+    if tarde:
+        start_fmt = format_time(min(tarde))
+        end_fmt = format_time(max(tarde))
+        rows.append({
+            "id": "part_tarde",
+            "title": "☀️ Tarde",
+            "description": f"De {start_fmt} a {end_fmt}"
+        })
+    if noche:
+        start_fmt = format_time(min(noche))
+        end_fmt = format_time(max(noche))
+        rows.append({
+            "id": "part_noche",
+            "title": "🌙 Noche",
+            "description": f"De {start_fmt} a {end_fmt}"
+        })
+
+    if not rows:
+        await send_message(phone,
+            f"No hay horarios disponibles para el {format_date(chosen_date)} 😕\n"
+            f"Elegí otro día o escribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
+        return
+        
+    rows.append({
+        "id": "cancel_flow",
+        "title": "⬅️ Volver"
+    })
     
-    for t in slots:
-        msg_lines.append(f"• {format_time(t)}")
-        slots_data.append(t.isoformat())
-
-    msg_lines.append("\n📝 _Escribí la hora que querés (ej: 16:30 o 16)_")
-
-    buttons = [{"id": "cancel_flow", "title": "⬅️ Volver"}]
-    await send_reply_buttons(phone, "\n".join(msg_lines), buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
+    sections = [{"title": "Franjas horarias", "rows": rows}]
 
     data = conv["data"].copy()
     data.update({
         "chosen_date": chosen_date_iso,
         "slots": slots_data
     })
+    
+    update_conversation(tenant.id, phone, "CHOOSING_PART_OF_DAY", data)
+    await send_list(
+        phone, 
+        f"📅 *{format_date(chosen_date)}*\n\n¿En qué momento del día preferís el turno?", 
+        "Ver franjas",
+        sections, 
+        tenant.wa_phone_number_id, 
+        tenant.wa_access_token
+    )
+
+# ---------------------------------------------------------------------------
+# CHOOSING_PART_OF_DAY → Elegir franja del día
+# ---------------------------------------------------------------------------
+
+async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db: Session, tenant: Tenant):
+    if message not in ["part_manana", "part_tarde", "part_noche"]:
+        await send_message(phone, "Por favor, elegí tocando uno de los botones de arriba.", tenant.wa_phone_number_id, tenant.wa_access_token)
+        return
+
+    slots_data = conv["data"].get("slots", [])
+    filtered_slots = []
+    
+    for slot_iso in slots_data:
+        t = datetime.time.fromisoformat(slot_iso)
+        if message == "part_manana" and t.hour < 13:
+            filtered_slots.append(slot_iso)
+        elif message == "part_tarde" and 13 <= t.hour < 18:
+            filtered_slots.append(slot_iso)
+        elif message == "part_noche" and t.hour >= 18:
+            filtered_slots.append(slot_iso)
+
+    if not filtered_slots:
+        await send_message(phone, "No hay horarios en esa franja. Escribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
+        return
+
+    # Enviar lista de horarios para esa franja
+    rows = []
+    for slot_iso in filtered_slots:
+        t = datetime.time.fromisoformat(slot_iso)
+        rows.append({
+            "id": f"time_{slot_iso}",
+            "title": format_time(t)
+        })
+        
+    rows.append({"id": "cancel_flow", "title": "⬅️ Volver"})
+
+    sections = [{"title": "Horarios disponibles", "rows": rows}]
+    chosen_date_iso = conv["data"].get("chosen_date")
+    chosen_date = datetime.date.fromisoformat(chosen_date_iso)
+    
+    # Nos aseguramos de mantener state=CHOOSING_TIME y filtered_slots 
+    # para que en el próximo paso valide correctamente solo estos
+    data = conv["data"].copy()
+    data["filtered_slots"] = filtered_slots
     update_conversation(tenant.id, phone, "CHOOSING_TIME", data)
 
+    await send_list(
+        phone,
+        f"🕐 *Horarios para el {format_date(chosen_date)}*\n\nElegí el horario que prefieras:",
+        "Ver horarios",
+        sections,
+        tenant.wa_phone_number_id,
+        tenant.wa_access_token
+    )
 # ---------------------------------------------------------------------------
 # CHOOSING_TIME → Elegir horario (lista interactiva O texto libre)
 # ---------------------------------------------------------------------------
 
 async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict, db: Session, tenant: Tenant):
-    slots_data = conv["data"].get("slots", [])
+    slots_data = conv["data"].get("filtered_slots", conv["data"].get("slots", []))
     chosen_time = None
 
-    # 1) Intentar por ID interactivo (time_HH:MM)
+    # Intentar por ID interactivo (time_HH:MM)
     if message.startswith("time_"):
-        time_str = message[5:]
         for slot_iso in slots_data:
-            slot_time = datetime.time.fromisoformat(slot_iso)
-            if format_time(slot_time) == time_str:
-                chosen_time = slot_time
+            if message == f"time_{slot_iso}":
+                chosen_time = datetime.time.fromisoformat(slot_iso)
                 break
 
-    # 2) Intentar parsear texto libre (ej: "16:30", "16", "a las 16 hs")
     if chosen_time is None:
-        parsed = parse_user_time(message)
-        if parsed:
-            for slot_iso in slots_data:
-                slot_time = datetime.time.fromisoformat(slot_iso)
-                if slot_time.hour == parsed.hour and slot_time.minute == parsed.minute:
-                    chosen_time = slot_time
-                    break
-            if chosen_time is None:
-                await send_message(phone,
-                    f"El horario {format_time(parsed)} no está disponible 😕\n"
-                    f"Elegí uno de la lista o escribí otra hora.", tenant.wa_phone_number_id, tenant.wa_access_token)
-                return
-
-    # 3) Fallback: por número de posición
-    if chosen_time is None:
-        try:
-            idx = int(message) - 1
-            if 0 <= idx < len(slots_data):
-                chosen_time = datetime.time.fromisoformat(slots_data[idx])
-        except ValueError:
-            pass
-
-    if chosen_time is None:
-        await send_message(phone, "No entendí la hora 🤔\nElegí de la lista o escribí la hora (ej: _16:30_ o _16_)", tenant.wa_phone_number_id, tenant.wa_access_token)
+        await send_message(phone, "No entendí la hora 🤔\nPor favor, seleccioná una de las opciones del menú interactivo.", tenant.wa_phone_number_id, tenant.wa_access_token)
         return
 
     # --- Crear el turno ---
