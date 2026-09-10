@@ -319,55 +319,7 @@ async def _handle_menu(phone: str, message: str, conv: dict, db: Session, tenant
             service_name = default_service.name
             price_fmt = f"${default_service.price:,.0f}".replace(",", ".")
 
-            # Mostrar fechas disponibles
-            dates = get_available_dates(db, tenant.id, days_ahead=7)
-            if not dates:
-                await send_message(phone, "No hay fechas disponibles en los próximos días 😕\nEscribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
-                reset_conversation(tenant.id, phone)
-                return
-
-            today = datetime.datetime.now(ar_tz).date()
-            tomorrow = today + datetime.timedelta(days=1)
-
-            rows = []
-            dates_data = []
-            for d in dates:
-                if d == today:
-                    title = "Hoy"
-                elif d == tomorrow:
-                    title = "Mañana"
-                else:
-                    title = format_date(d)
-
-                rows.append({
-                    "id": f"date_{d.isoformat()}",
-                    "title": title,
-                    "description": f"{d.day}/{d.month}/{d.year}"
-                })
-                dates_data.append(d.isoformat())
-
-            rows.append({
-                "id": "cancel_flow",
-                "title": "⬅️ Volver"
-            })
-
-            sections = [{"title": "Días disponibles", "rows": rows}]
-            await send_list(
-                phone,
-                f"✂️ Valor del corte: *{price_fmt}*\n\n📅 ¿Qué día te queda bien?",
-                "Ver días",
-                sections,
-                tenant.wa_phone_number_id,
-                tenant.wa_access_token
-            )
-
-            data = {
-                "service_id": service_id,
-                "service_name": service_name,
-                "service_price": price_fmt,
-                "dates": dates_data,
-            }
-            update_conversation(tenant.id, phone, "CHOOSING_DATE", data)
+            await _send_date_list(phone, service_id, service_name, price_fmt, db, tenant)
         else:
             # Si hay 2 o más servicios, mostramos lista para elegir
             rows = []
@@ -469,6 +421,12 @@ async def _handle_choosing_service(phone: str, message: str, conv: dict, db: Ses
         return
 
     # Mostrar fechas disponibles
+    await _send_date_list(phone, chosen_service["id"], chosen_service["name"], chosen_service["price_fmt"], db, tenant)
+
+# ---------------------------------------------------------------------------
+# Helper para mandar lista de días
+# ---------------------------------------------------------------------------
+async def _send_date_list(phone: str, service_id: int, service_name: str, service_price_fmt: str, db: Session, tenant: Tenant):
     dates = get_available_dates(db, tenant.id, days_ahead=7)
     if not dates:
         await send_message(phone, "No hay fechas disponibles en los próximos días 😕\nEscribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
@@ -503,7 +461,7 @@ async def _handle_choosing_service(phone: str, message: str, conv: dict, db: Ses
     sections = [{"title": "Días disponibles", "rows": rows}]
     await send_list(
         phone,
-        f"✂️ Valor: *{chosen_service['price_fmt']}*\n\n📅 ¿Qué día te queda bien?",
+        f"✂️ Valor: *{service_price_fmt}*\n\n📅 ¿Qué día te queda bien?",
         "Ver días",
         sections,
         tenant.wa_phone_number_id,
@@ -511,9 +469,9 @@ async def _handle_choosing_service(phone: str, message: str, conv: dict, db: Ses
     )
 
     data = {
-        "service_id": chosen_service["id"],
-        "service_name": chosen_service["name"],
-        "service_price": chosen_service["price_fmt"],
+        "service_id": service_id,
+        "service_name": service_name,
+        "service_price": service_price_fmt,
         "dates": dates_data,
     }
     update_conversation(tenant.id, phone, "CHOOSING_DATE", data)
@@ -594,7 +552,7 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
         return
         
     rows.append({
-        "id": "cancel_flow",
+        "id": "back_to_date",
         "title": "⬅️ Volver"
     })
     
@@ -621,6 +579,14 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
 # ---------------------------------------------------------------------------
 
 async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db: Session, tenant: Tenant):
+    if message == "back_to_date":
+        service_id = conv["data"].get("service_id")
+        service_name = conv["data"].get("service_name")
+        service_price = conv["data"].get("service_price", "")
+        if service_id:
+            await _send_date_list(phone, service_id, service_name, service_price, db, tenant)
+        return
+
     if message not in ["part_manana", "part_tarde", "part_noche"]:
         await send_message(phone, "Por favor, elegí tocando uno de los botones de arriba.", tenant.wa_phone_number_id, tenant.wa_access_token)
         return
