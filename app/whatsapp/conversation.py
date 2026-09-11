@@ -510,9 +510,9 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
 
     slots_data = [t.isoformat() for t in slots]
 
-    manana = [t for t in slots if t.hour < 13]
-    tarde = [t for t in slots if 13 <= t.hour < 18]
-    noche = [t for t in slots if t.hour >= 18]
+    # Mañana: antes de las 14:00. Tarde: a partir de las 14:00 (contiguo para evitar perder horarios).
+    manana = [t for t in slots if t.hour < 14]
+    tarde = [t for t in slots if t.hour >= 14]
 
     rows = []
     if manana:
@@ -529,14 +529,6 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
         rows.append({
             "id": "part_tarde",
             "title": "☀️ Tarde",
-            "description": f"De {start_fmt} a {end_fmt}"
-        })
-    if noche:
-        start_fmt = format_time(min(noche))
-        end_fmt = format_time(max(noche))
-        rows.append({
-            "id": "part_noche",
-            "title": "🌙 Noche",
             "description": f"De {start_fmt} a {end_fmt}"
         })
 
@@ -582,7 +574,7 @@ async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db:
             await _send_date_list(phone, service_id, service_name, service_price, db, tenant)
         return
 
-    if message not in ["part_manana", "part_tarde", "part_noche"]:
+    if message not in ["part_manana", "part_tarde"]:
         await send_message(phone, "Por favor, elegí tocando uno de los botones de arriba.", tenant.wa_phone_number_id, tenant.wa_access_token)
         return
 
@@ -591,11 +583,9 @@ async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db:
     
     for slot_iso in slots_data:
         t = datetime.time.fromisoformat(slot_iso)
-        if message == "part_manana" and t.hour < 13:
+        if message == "part_manana" and t.hour < 14:
             filtered_slots.append(slot_iso)
-        elif message == "part_tarde" and 13 <= t.hour < 18:
-            filtered_slots.append(slot_iso)
-        elif message == "part_noche" and t.hour >= 18:
+        elif message == "part_tarde" and t.hour >= 14:
             filtered_slots.append(slot_iso)
 
     if not filtered_slots:
@@ -604,39 +594,44 @@ async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db:
 
     # Enviar lista de horarios para esa franja
     rows = []
-    for slot_iso in filtered_slots:
+    for slot_iso in filtered_slots[:10]:
         t = datetime.time.fromisoformat(slot_iso)
         rows.append({
             "id": f"time_{slot_iso}",
             "title": format_time(t)
         })
-        
-    rows.append({"id": "back_to_part_of_day", "title": "⬅️ Volver"})
+
+    text_suffix = ""
+    # Si hay 10 horarios, no entra el botón volver. Se le avisa por texto.
+    if len(rows) < 10:
+        rows.append({"id": "back_to_part_of_day", "title": "⬅️ Volver"})
+    else:
+        text_suffix = "\n\n_Si querés volver a la selección de horario, escribí *volver*._"
 
     sections = [{"title": "Horarios disponibles", "rows": rows}]
     chosen_date_iso = conv["data"].get("chosen_date")
     chosen_date = datetime.date.fromisoformat(chosen_date_iso)
     
-    # Nos aseguramos de mantener state=CHOOSING_TIME y filtered_slots 
-    # para que en el próximo paso valide correctamente solo estos
     data = conv["data"].copy()
     data["filtered_slots"] = filtered_slots
     update_conversation(db, tenant.id, phone, "CHOOSING_TIME", data)
 
     await send_list(
         phone,
-        f"🕐 *Horarios para el {format_date(chosen_date)}*\n\nElegí el horario que prefieras:",
+        f"🕐 *Horarios para el {format_date(chosen_date)}*\n\nElegí el horario que prefieras:{text_suffix}",
         "Ver horarios",
         sections,
         tenant.wa_phone_number_id,
         tenant.wa_access_token
     )
+
+
 # ---------------------------------------------------------------------------
 # CHOOSING_TIME → Elegir horario (lista interactiva O texto libre)
 # ---------------------------------------------------------------------------
 
 async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict, db: Session, tenant: Tenant):
-    if message == "back_to_part_of_day":
+    if message == "back_to_part_of_day" or message.strip().lower() == "volver":
         chosen_date_iso = conv["data"].get("chosen_date")
         if chosen_date_iso:
             await _handle_choosing_date(phone, f"date_{chosen_date_iso}", conv, db, tenant)
@@ -726,7 +721,9 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
     else:
         await send_message(phone, "¡Uy! 😅 Alguien reservó ese mismo horario recién.\nElegí otro horario de esta franja por favor.", tenant.wa_phone_number_id, tenant.wa_access_token)
         update_conversation(db, tenant.id, phone, "CHOOSING_PART_OF_DAY", conv["data"])
-        await _handle_choosing_part_of_day(phone, "back_to_part_of_day", conv, db, tenant)
+        chosen_date_iso = conv["data"].get("chosen_date")
+        if chosen_date_iso:
+            await _handle_choosing_date(phone, f"date_{chosen_date_iso}", conv, db, tenant)
 
 # ---------------------------------------------------------------------------
 # CANCEL_CHOOSING → Cancelar un turno
