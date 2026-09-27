@@ -146,23 +146,23 @@
     <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
         
         <div style="margin-bottom: 1rem;">
-            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Fecha</label>
-            <input type="date" name="date" id="manualDate" value="{{ target_date.strftime('%Y-%m-%d') }}" required onchange="fetchAvailableSlots()" style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none; font-family:inherit;">
+            <label class="form-label">Fecha</label>
+            <input type="date" name="date" id="manualDate" class="form-input" value="{{ target_date.strftime('%Y-%m-%d') }}" required onchange="fetchAvailableSlots()">
         </div>
 
         <div style="margin-bottom: 1rem;">
-            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Nombre del Cliente</label>
-            <input type="text" name="client_name" required placeholder="Ej: Juan Presencial" style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none;">
+            <label class="form-label">Nombre del Cliente</label>
+            <input type="text" name="client_name" class="form-input" required placeholder="Ej: Juan Presencial">
         </div>
 
         <div style="margin-bottom: 1rem;">
-            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Teléfono (Opcional)</label>
-            <input type="tel" name="client_phone" placeholder="Ej: 5491123456789" style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none;">
+            <label class="form-label">Teléfono (Opcional)</label>
+            <input type="tel" name="client_phone" class="form-input" placeholder="Ej: 5491123456789">
         </div>
 
         <div style="margin-bottom: 1rem;">
-            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Servicio</label>
-            <select name="service_id" id="manualService" required onchange="fetchAvailableSlots()" style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none;">
+            <label class="form-label">Servicio</label>
+            <select name="service_id" id="manualService" class="form-input" required onchange="fetchAvailableSlots()">
                 <option value="" disabled selected>Seleccione un servicio...</option>
                 {% for svc in services %}
                 <option value="{{ svc.id }}">{{ svc.name }} - ${{ "{:,.0f}".format(svc.price).replace(',', '.') }}</option>
@@ -171,13 +171,13 @@
         </div>
 
         <div style="margin-bottom: 2rem;">
-            <label style="display:block; margin-bottom:0.5rem; font-size:0.875rem; color:var(--text-secondary);">Horario</label>
-            <select name="time" id="manualTime" required disabled style="width:100%; padding:0.75rem; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:white; outline:none;">
+            <label class="form-label">Horario</label>
+            <select name="time" id="manualTime" class="form-input" required disabled>
                 <option value="" disabled selected>Primero seleccione un servicio</option>
             </select>
         </div>
         
-        <button type="submit" id="manualSubmitBtn" disabled class="btn btn-primary" style="width:100%; padding:1rem; border-radius:12px; font-weight:bold;">
+        <button type="submit" id="manualSubmitBtn" disabled class="btn-full">
             Guardar Turno
         </button>
     </form>

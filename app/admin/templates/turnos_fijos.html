@@ -60,37 +60,50 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
             <h3 style="font-size: 1.1rem; margin: 0;">Turnos Configurados</h3>
             
-            <div style="position: relative; max-width: 300px; width: 100%;">
+            <div style="position: relative; width: 100%;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 1rem; top: 12px; color: var(--text-secondary);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="searchInput" placeholder="Buscar por nombre, día o servicio..." onkeyup="filterTurnos()" style="width: 100%; padding: 0.75rem 1rem 0.75rem 3rem; background-color: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; color: white; outline: none; font-size: 0.9rem; font-family: inherit;">
+                <input type="text" id="searchInput" placeholder="Buscar por nombre, día o servicio..." class="form-input" onkeyup="filterTurnos()" style="padding-left: 3rem;">
             </div>
         </div>
 
-        <div class="blocked-times-list" id="turnosList">
+        <div class="blocked-times-list" id="turnosList" style="display: flex; flex-direction: column; gap: 1rem;">
             {% if not recurring_appointments %}
             <p style="text-align: center; color: var(--text-secondary); padding: 1rem;">No hay turnos fijos configurados.</p>
             {% endif %}
 
             {% set day_names = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] %}
             {% for rec in recurring_appointments %}
-            <div class="blocked-card turno-fijo-item" style="{% if rec.active %}background: rgba(16, 185, 129, 0.05); border-left-color: #10b981;{% else %}opacity: 0.5;{% endif %}">
+            <div class="turnofijo-card turno-fijo-item" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; {% if not rec.active %}opacity: 0.7;{% endif %}">
                 <div class="turno-info">
-                    <h4 style="margin-bottom: 0.25rem;">🔁 <span class="client-name">{{ rec.client_name }}</span> — <span class="day-time">{{ day_names[rec.day_of_week] }} {{ rec.time.strftime('%H:%M') }}</span></h4>
-                    <p style="font-size: 0.875rem; color: {% if rec.active %}#6ee7b7{% else %}#fca5a5{% endif %};">
-                        {{ rec.service.name if rec.service else 'Servicio' }}
-                        {% if not rec.active %} — <strong>PAUSADO</strong>{% endif %}
-                    </p>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                <h3 class="client-name" style="margin: 0; font-size: 1.1rem;">{{ rec.client_name }}</h3>
+                                {% if rec.active %}
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">ACTIVO</span>
+                                {% else %}
+                                <span class="badge" style="background: rgba(100, 116, 139, 0.15); color: var(--text-secondary);">PAUSADO</span>
+                                {% endif %}
+                            </div>
+                            <div style="color: var(--text-secondary); font-size: 0.9rem;">{{ rec.service.name if rec.service else 'Servicio' }}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="day-time" style="font-weight: bold; font-size: 1.1rem; color: var(--text-primary);">{{ day_names[rec.day_of_week] }}</div>
+                            <div style="color: var(--text-primary);">{{ rec.time.strftime('%H:%M') }}</div>
+                        </div>
+                    </div>
                 </div>
+                
                 <div class="card-actions" style="display: flex; gap: 0.5rem; margin-top: 1rem; width: 100%;">
                     <form action="/admin/turnos/fijo/{{ rec.id }}/toggle" method="POST" style="flex: 1; margin: 0;">
-    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
-                        <button type="submit" class="{% if rec.active %}btn-secondary{% else %}btn-primary{% endif %}" style="padding: 0.5rem 1rem; font-size: 0.8rem; width: 100%;">
+                        <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
+                        <button type="submit" class="{% if rec.active %}btn-secondary{% else %}btn-primary{% endif %}" style="width: 100%;">
                             {% if rec.active %}Pausar{% else %}Activar{% endif %}
                         </button>
                     </form>
                     <form action="/admin/turnos/fijo/{{ rec.id }}/delete" method="POST" style="flex: 1; margin: 0;" onsubmit="return confirm('¿Eliminar este turno fijo?');">
-    <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
-                        <button type="submit" class="btn-secondary" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); padding: 0.5rem 1rem; font-size: 0.8rem; width: 100%;">Eliminar</button>
+                        <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
+                        <button type="submit" class="btn-secondary" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); width: 100%;">Eliminar</button>
                     </form>
                 </div>
             </div>
