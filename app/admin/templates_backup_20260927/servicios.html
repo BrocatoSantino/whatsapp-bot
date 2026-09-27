@@ -27,7 +27,7 @@
     }
 
     .service-card {
-        background: var(--bg-card);
+        background: rgba(20, 20, 20, 0.4);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         border: 1px solid var(--border);
@@ -155,20 +155,6 @@
         .form-row button {
             width: 100%;
         }
-    }
-    :root.light-mode .service-card {
-        background: #ffffff !important;
-        border-color: #e2e8f0 !important;
-    }
-    :root.light-mode .service-card:hover {
-        background: #f8fafc !important;
-        border-color: #cbd5e1 !important;
-    }
-    :root.light-mode .status-active {
-        background: rgba(16, 185, 129, 0.06);
-    }
-    :root.light-mode .status-inactive {
-        background: rgba(100, 116, 139, 0.06);
     }
 </style>
 {% endblock %}

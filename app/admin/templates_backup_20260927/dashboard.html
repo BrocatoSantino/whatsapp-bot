@@ -140,7 +140,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 1.5rem;
-        background: var(--bg-card);
+        background: linear-gradient(145deg, rgba(20,20,20,0.8) 0%, rgba(10,10,10,0.9) 100%);
         border-left: 4px solid var(--border);
         cursor: pointer;
         position: relative;
@@ -167,7 +167,7 @@
     .status-cancelled {
         border-left-color: var(--danger);
         opacity: 0.35;
-        background: var(--bg-card);
+        background: rgba(10,10,10,0.5);
     }
     
     .status-cancelled .appointment-time,
@@ -349,24 +349,6 @@
         .hide-mobile {
             display: none;
         }
-    }
-
-    :root.light-mode .appointment-card {
-        background: #ffffff !important;
-        border-left-width: 4px;
-    }
-    :root.light-mode .bottom-sheet {
-        background: #ffffff !important;
-    }
-    :root.light-mode .btn-success {
-        background-color: rgba(16, 185, 129, 0.08) !important;
-    }
-    :root.light-mode .btn-warning {
-        background-color: rgba(245, 158, 11, 0.08) !important;
-    }
-    :root.light-mode .badge-today {
-        background-color: var(--text-primary);
-        color: var(--bg-primary);
     }
 </style>
 {% endblock %}
