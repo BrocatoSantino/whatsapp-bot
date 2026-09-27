@@ -26,331 +26,17 @@
             --bg-card: rgba(20, 20, 20, 0.4);
             --bg-card-hover: rgba(30, 30, 30, 0.6);
             --accent: #ffffff;
-            --accent-light: #e5e5e5;
             --text-primary: #ffffff;
             --text-secondary: #a1a1aa;
             --border: rgba(255, 255, 255, 0.06);
             --border-hover: rgba(255, 255, 255, 0.12);
             --success: #10b981;
             --danger: #ef4444;
-            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            --glow-subtle: 0 0 20px rgba(255, 255, 255, 0.02);
-            --glow-accent: 0 0 30px rgba(255, 255, 255, 0.15);
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --font-family: 'Inter', sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html, body {
-            overflow-x: hidden;
-        }
-
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            -webkit-font-smoothing: antialiased;
-            background-image: 
-                radial-gradient(ellipse at 50% -20%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
-            background-attachment: fixed;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        /* Navbar */
-        .navbar {
-            background: rgba(3, 3, 3, 0.6);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            transition: background 0.3s ease;
-        }
-
-        .navbar-content {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.125rem;
-            color: var(--text-primary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            letter-spacing: -0.02em;
-            text-transform: uppercase;
-        }
-        
-        .brand-logo-img {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            object-fit: cover;
-            border: 1px solid var(--border);
-        }
-
-        .navbar-logout {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid transparent;
-        }
-
-        .navbar-logout:hover {
-            color: var(--text-primary);
-            background: rgba(255,255,255,0.08);
-            border-color: var(--border);
-        }
-
-        /* Main Container */
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 1.5rem;
-            width: 100%;
-            flex-grow: 1;
-        }
-
-        /* Typography */
-        h1, h2, h3, h4, h5, h6 {
-            color: var(--text-primary);
-            font-weight: 600;
-            line-height: 1.2;
-            letter-spacing: -0.03em;
-        }
-
-        p {
-            color: var(--text-secondary);
-        }
-
-        /* Forms */
-        input, select {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            background-color: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-family: var(--font-family);
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            outline: none;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        input:focus, select:focus {
-            border-color: rgba(255,255,255,0.3);
-            background-color: rgba(255, 255, 255, 0.05);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 3px rgba(255,255,255,0.05);
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.6rem 1.25rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            border: 1px solid transparent;
-            gap: 0.5rem;
-            letter-spacing: 0.01em;
-        }
-
-        .btn-primary {
-            background: linear-gradient(180deg, #ffffff 0%, #e5e5e5 100%);
-            color: #000000;
-            box-shadow: 0 4px 12px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,1);
-        }
-
-        .btn-primary:hover {
-            background: #ffffff;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,1);
-        }
-        
-        .btn-outline {
-            background-color: transparent;
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.02);
-        }
-
-        .btn-outline:hover {
-            border-color: rgba(255,255,255,0.2);
-            background-color: rgba(255,255,255,0.03);
-        }
-
-        .btn-danger {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .btn-danger:hover {
-            background-color: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.3);
-            color: #f87171;
-        }
-
-        /* Cards (Glassmorphism) */
-        .card {
-            background-color: var(--bg-card);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-            box-shadow: var(--glow-subtle);
-        }
-
-        .card-hover:hover {
-            background-color: var(--bg-card-hover);
-            border-color: var(--border-hover);
-            transform: translateY(-3px);
-            box-shadow: var(--glow-accent);
-        }
-
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            cursor: pointer;
-            padding: 0.5rem;
-            transition: transform 0.2s ease;
-        }
-        
-        .menu-toggle:active {
-            transform: scale(0.9);
-        }
-
-        .navbar-links {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        
-        .menu-close {
-            display: none;
-        }
-        
-        .drawer-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 998;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        @media (max-width: 768px) {
-            .menu-toggle {
-                display: block;
-            }
-            
-            .menu-close {
-                display: block;
-                position: absolute;
-                top: 1.5rem;
-                right: 1.5rem;
-                background: none;
-                border: none;
-                color: var(--text-primary);
-                cursor: pointer;
-                padding: 0.5rem;
-                transition: transform 0.2s ease;
-            }
-            
-            .menu-close:active {
-                transform: scale(0.9);
-            }
-            
-            .navbar-links {
-                position: fixed;
-                top: 0;
-                right: -300px;
-                width: 280px;
-                height: 100vh;
-                background: var(--bg-primary);
-                border-left: 1px solid var(--border);
-                flex-direction: column;
-                align-items: stretch;
-                padding: 5rem 1.5rem 2rem 1.5rem;
-                gap: 1rem;
-                transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-                z-index: 1000;
-                box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            }
-
-            .navbar-links.active {
-                right: 0;
-            }
-            
-            .navbar-logout {
-                text-align: left;
-                padding: 1rem 1.25rem;
-                font-size: 1rem;
-                border: 1px solid rgba(255,255,255,0.05);
-                border-radius: 12px;
-                background: rgba(255,255,255,0.02);
-            }
-            
-            .navbar-logout:hover {
-                transform: translateX(5px);
-            }
-            
-            .navbar-brand-wrapper {
-                width: 100%;
-            }
-        }
-
-        /* ═══════════════════════════════════════════════════ */
-        /* LIGHT MODE                                          */
-        /* ═══════════════════════════════════════════════════ */
         :root.light-mode {
             --bg-primary: #f8fafc;
             --bg-secondary: #ffffff;
@@ -360,16 +46,14 @@
             --border: rgba(0, 0, 0, 0.1);
             --border-hover: rgba(0, 0, 0, 0.15);
         }
+
+        /* Light Mode Overrides */
         :root.light-mode input, :root.light-mode select {
             background: #f1f5f9 !important;
             color: #0f172a !important;
             border-color: #cbd5e1 !important;
         }
-        :root.light-mode .card, :root.light-mode .bento-item, :root.light-mode .appointment-card,
-        :root.light-mode .turnofijo-card, :root.light-mode .shift-row, :root.light-mode .modal-content,
-        :root.light-mode .bottom-sheet, :root.light-mode .navbar, :root.light-mode .navbar-links,
-        :root.light-mode .service-card, :root.light-mode .panel-section, :root.light-mode .stat-row,
-        :root.light-mode .chart-container, :root.light-mode .toggle-row {
+        :root.light-mode .bento-item, :root.light-mode .appointment-card, :root.light-mode .turnofijo-card, :root.light-mode .shift-row, :root.light-mode .modal-content, :root.light-mode .bottom-sheet, :root.light-mode .navbar, :root.light-mode .navbar-links, :root.light-mode .service-card, :root.light-mode .card, :root.light-mode .panel-section, :root.light-mode .stat-row, :root.light-mode .chart-container, :root.light-mode .toggle-row {
             background: #ffffff !important;
             border-color: #e2e8f0 !important;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
@@ -380,14 +64,16 @@
         :root.light-mode .day-bubble.active, :root.light-mode .day-circle.active {
             background: var(--text-primary);
         }
-        :root.light-mode .timeline-item.status-completed .timeline-dot,
-        :root.light-mode .timeline-item.status-pending .timeline-dot {
+        :root.light-mode .timeline-item.status-completed .timeline-dot, :root.light-mode .timeline-item.status-pending .timeline-dot {
             box-shadow: 0 0 0 4px #ffffff;
         }
-        :root.light-mode .navbar-logout {
+        :root.light-mode .nav-item {
             background: #f1f5f9;
             border-color: #e2e8f0;
-            color: var(--text-primary);
+        }
+        :root.light-mode .nav-item.active {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
         }
         :root.light-mode .week-nav-btn {
             background: #f1f5f9;
@@ -397,14 +83,14 @@
             background: #f1f5f9;
             border-color: #e2e8f0;
         }
-        :root.light-mode .btn-secondary-custom {
+        :root.light-mode .btn-secondary {
             background: #f1f5f9;
             border-color: #e2e8f0;
         }
-        :root.light-mode .btn-dashed, :root.light-mode .btn-outline-custom {
+        :root.light-mode .btn-dashed, :root.light-mode .btn-outline {
             border-color: #cbd5e1;
         }
-        :root.light-mode .btn-primary {
+        :root.light-mode .btn-full {
             background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
             color: #ffffff;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -418,39 +104,330 @@
         :root.light-mode body {
             background-image: radial-gradient(ellipse at 50% -20%, rgba(0, 0, 0, 0.03) 0%, transparent 60%);
         }
-        :root.light-mode .blocked-card {
-            background: rgba(239, 68, 68, 0.03) !important;
-        }
-        :root.light-mode .checkbox-label {
-            background: #f1f5f9;
-            border-color: #e2e8f0;
-        }
-        :root.light-mode .custom-select {
-            background-color: #f1f5f9 !important;
-        }
-        :root.light-mode .drawer-overlay {
-            background: rgba(0, 0, 0, 0.3);
+
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
+
+        body {
+            background-color: var(--bg-primary); color: var(--text-primary);
+            line-height: 1.6; min-height: 100vh;
+            background-image: radial-gradient(ellipse at 50% -20%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+            background-attachment: fixed; padding-bottom: 80px; -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* ═══════════════════════════════════════════════════ */
-        /* UTILITY CLASSES (Nuevas)                            */
-        /* ═══════════════════════════════════════════════════ */
+        /* Navbar & Sidebar Drawer */
+        .navbar {
+            background: rgba(3, 3, 3, 0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; position: sticky; top: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: background 0.3s ease;
+        }
+        .navbar-brand { font-weight: 700; font-size: 1.125rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-primary); text-decoration: none; display: flex; align-items: center; gap: 0.75rem;}
+        
+        .menu-toggle { background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 0.25rem; display: block; }
+
+        .drawer-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 998; opacity: 0; transition: opacity 0.3s ease;
+        }
+        
+        .navbar-links {
+            position: fixed; top: 0; right: -300px; width: 280px; height: 100vh;
+            background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column;
+            align-items: stretch; padding: 5rem 1.5rem 2rem 1.5rem; gap: 1rem; transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000; box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+        .navbar-links.active { right: 0; }
+        
+        .menu-close { position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 0.5rem; display: block;}
+        
+        .nav-item {
+            text-align: left; padding: 1rem 1.25rem; font-size: 1rem; border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px; background: rgba(255,255,255,0.02); color: var(--text-primary); text-decoration: none;
+            display: flex; align-items: center; gap: 0.75rem; cursor: pointer;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.05); }
+        .nav-item.active { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
+        .nav-item-danger { color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); }
+
+        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 1.5rem; }
+
+        /* Views */
+        .fade-in { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Styles for mockup placeholders */
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; backdrop-filter: blur(12px); margin-bottom: 1rem; }
+
+        /* Agenda styles... */
+        .week-slider-container { margin-bottom: 1.5rem; }
+        .week-slider { display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.5rem; -ms-overflow-style: none; scrollbar-width: none; }
+        .week-slider::-webkit-scrollbar { display: none; }
+        .day-bubble { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px; height: 75px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease; position: relative; text-decoration: none;}
+        .day-bubble.calendar-btn { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+        .day-bubble:hover:not(.active) { background: rgba(255,255,255,0.06); }
+        .day-bubble.active { background: var(--text-primary); color: var(--bg-primary); }
+        .day-name { font-size: 0.75rem; font-weight: 500; margin-bottom: 2px; text-transform: uppercase; }
+        .day-number { font-size: 1.35rem; font-weight: 700; line-height: 1; }
+        .day-bubble.active .day-name, .day-bubble.active .day-number { color: var(--bg-primary); }
+        .badge-today { position: absolute; top: -6px; background: var(--info); color: white; font-size: 0.55rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; border: 2px solid var(--bg-primary); }
+        .bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .bento-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; backdrop-filter: blur(12px); }
+        .bento-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+        .bento-value { font-size: 1.5rem; font-weight: 700; }
+        .bento-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; color: var(--text-primary); }
+        .btn-full { width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem; border-radius: 14px; background: linear-gradient(180deg, #ffffff 0%, #e5e5e5 100%); color: #000; font-size: 1rem; font-weight: 600; border: none; cursor: pointer; margin-bottom: 2.5rem; box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
+        .btn-full:active { transform: scale(0.98); }
+        .timeline-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .timeline { position: relative; padding-left: 2rem; }
+        .timeline::before { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+        .timeline-item { position: relative; margin-bottom: 1.5rem; }
+        .timeline-dot { position: absolute; left: -2rem; top: 1.25rem; width: 12px; height: 12px; border-radius: 50%; background: var(--bg-primary); border: 2px solid var(--text-secondary); z-index: 2; }
+        .timeline-time { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem; display: block; }
+        .appointment-card { background: rgba(20,20,20,0.6); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; cursor: pointer; transition: all 0.2s; }
+        .appointment-card:active { transform: scale(0.98); background: rgba(30,30,30,0.8); }
+        .client-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; }
+        .service-name { font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+        .status-pending .timeline-dot { border-color: var(--info); box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); background: var(--info); }
+        .status-completed .timeline-dot { border-color: var(--success); background: var(--success); }
+        .status-completed .appointment-card { opacity: 0.6; }
+        .status-cancelled .timeline-dot { border-color: var(--danger); background: var(--danger); }
+        .status-cancelled .appointment-card { opacity: 0.4; }
+        .status-cancelled .client-name { text-decoration: line-through; }
+        .status-no_show .timeline-dot { border-color: #f59e0b; background: #f59e0b; }
+        .status-no_show .appointment-card { opacity: 0.5; }
+        .badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 8px; vertical-align: middle; letter-spacing: 0.5px; }
+        .badge-completed { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        
+        /* Bottom Sheet UI */
+        .bottom-sheet-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 999; }
+        .bottom-sheet-overlay.open { opacity: 1; visibility: visible; }
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-secondary); border-top: 1px solid var(--border); border-radius: 24px 24px 0 0; padding: 2rem 1.5rem; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1000; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); max-width: 600px; margin: 0 auto; }
+        .bottom-sheet.open { transform: translateY(0); }
+        .sheet-handle { width: 40px; height: 4px; background: var(--border-hover); border-radius: 4px; margin: -1rem auto 1.5rem; }
+        .sheet-header { text-align: center; margin-bottom: 2rem; }
+        .sheet-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .sheet-subtitle { color: var(--text-secondary); font-size: 0.9rem; }
+        .action-row { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem; }
+        .action-btn-wrapper { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; cursor: pointer; flex: 1; max-width: 90px; }
+        .action-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: transform 0.2s; }
+        .action-btn-wrapper:active .action-icon { transform: scale(0.9); }
+        .icon-whatsapp { background: rgba(37, 211, 102, 0.15); color: #25D366; border: 1px solid rgba(37, 211, 102, 0.3); }
+        .icon-complete { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .icon-cancel { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .action-label { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); text-align: center; }
+        
+        /* Toggle Switches */
+        .day-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            background: rgba(255,255,255,0.02);
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: calc(50% - 0.25rem);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        @media (max-width: 480px) {
+            .day-toggle { width: 100%; }
+        }
+        .day-toggle.active {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .toggle-switch {
+            width: 40px;
+            height: 22px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            position: relative;
+            transition: 0.3s;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .day-toggle.active .toggle-switch {
+            background: var(--success);
+        }
+        .day-toggle.active .toggle-switch::after {
+            left: 20px;
+            background: white;
+        }
+
+        /* Day Circles for compact layout */
+        .day-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        .day-circle.active {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border-color: var(--text-primary);
+        }
+
+        .shift-row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+            padding: 1.25rem;
+            background: rgba(20, 20, 20, 0.4);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .shift-delete-btn {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 480px) {
+            .day-circle {
+                width: 38px;
+                height: 38px;
+                font-size: 0.85rem;
+            }
+            .shift-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+            .shift-delete-btn {
+                width: 100%;
+                margin-bottom: 0;
+            }
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            transform: translateY(20px);
+            animation: modalFadeIn 0.3s forwards;
+        }
+        @keyframes modalFadeIn {
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Animated Theme Toggle Button */
+        .theme-toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            position: relative;
+            margin-right: 0.25rem;
+            transition: background 0.2s;
+            outline: none;
+        }
+        
+        .theme-icon-sun, .theme-icon-moon {
+            position: absolute;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Dark mode (default): Sun visible, Moon hidden */
+        .theme-icon-sun {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+        }
+        .theme-icon-moon {
+            transform: scale(0) rotate(90deg);
+            opacity: 0;
+        }
+
+        /* Light mode: Sun hidden, Moon visible */
+        :root.light-mode .theme-icon-sun {
+            transform: scale(0) rotate(-90deg);
+            opacity: 0;
+        }
+        :root.light-mode .theme-icon-moon {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+        }
+
+        /* Utility classes for forms */
         .form-input { width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text-primary); outline: none; font-family: inherit; font-size: 1rem; }
         .form-input-lg { padding: 0.75rem 1rem; border-radius: 10px; background: rgba(0,0,0,0.4); }
         .form-label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem; }
         .form-label-sm { font-size: 0.75rem; margin-bottom: 0.25rem; }
 
-        /* Animated Theme Toggle */
-        .theme-toggle-btn {
-            background: none; border: none; color: var(--text-primary); cursor: pointer;
-            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-            border-radius: 50%; position: relative; transition: background 0.2s; outline: none;
-        }
-        .theme-icon-sun, .theme-icon-moon { position: absolute; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .theme-icon-sun { transform: scale(1) rotate(0deg); opacity: 1; }
-        .theme-icon-moon { transform: scale(0) rotate(90deg); opacity: 0; }
-        :root.light-mode .theme-icon-sun { transform: scale(0) rotate(-90deg); opacity: 0; }
-        :root.light-mode .theme-icon-moon { transform: scale(1) rotate(0deg); opacity: 1; }
+        /* Buttons */
+        .btn-icon { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+        .btn-icon:hover { background: rgba(255,255,255,0.1); }
+        .btn-secondary { flex: 1; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-primary); border-radius: 10px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: inherit; text-decoration: none;}
+        .btn-primary { flex: 1; padding: 0.75rem; background: var(--text-primary); border: none; color: var(--bg-primary); font-weight: 700; border-radius: 10px; cursor: pointer; font-family: inherit; font-size: inherit; text-decoration: none;}
+        .btn-outline { background: none; border: 1px solid var(--border); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.875rem; width: 100%; font-family: inherit; text-decoration: none;}
+        .btn-dashed { background: none; border: 1px dashed var(--border); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.875rem; width: 100%; font-family: inherit; text-decoration: none;}
+        
+        .panel-section { background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+        .stat-row { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; display: flex; align-items: center; justify-content: space-between; }
+        .chart-container { height: 250px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem 1rem 1rem 1rem; margin-bottom: 1rem; position: relative; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid var(--border); }
+
 
         {% block extra_css %}{% endblock %}
     </style>
@@ -458,69 +435,67 @@
 <body>
     {% if not hide_navbar %}
     <nav class="navbar">
-        <div class="navbar-content">
-            <div class="navbar-brand-wrapper" style="display: flex; justify-content: space-between; align-items: center;">
-                <a href="/admin" class="navbar-brand">
-                    <span>{{ business_name }}</span>
-                </a>
-                <button class="menu-toggle" onclick="toggleMenu()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-                </button>
-            </div>
-            
-            <div class="drawer-overlay" id="drawer-overlay" onclick="toggleMenu()"></div>
-            
-            <div class="navbar-links" id="nav-links">
-                <button class="menu-close" onclick="toggleMenu()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 0 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
-                    <div style="font-weight: 700; font-size: 1.1rem;">Menú</div>
-                    <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Cambiar tema">
-                        <svg class="theme-icon-sun" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                        </svg>
-                        <svg class="theme-icon-moon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                        </svg>
-                    </button>
-                </div>
-                <a href="/admin" class="navbar-logout" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                    Inicio
-                </a>
-                <a href="/admin/historial" class="navbar-logout" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
-                    Historial
-                </a>
-                <a href="/admin/configuracion" class="navbar-logout" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    Horarios
-                </a>
-                <a href="/admin/servicios" class="navbar-logout" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                    Servicios
-                </a>
-                <a href="/admin/turnos_fijos" class="navbar-logout" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 23l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
-                    Turnos Fijos
-                </a>
-                <div style="flex-grow: 1;"></div>
-                <a href="/admin/cambiar-password" class="navbar-logout" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    Cambiar Contraseña
-                </a>
-                <a href="/admin/logout" class="navbar-logout" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); display: flex; align-items: center; gap: 0.75rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2 2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                    Cerrar Sesión
-                </a>
-            </div>
-        </div>
+        <a href="/admin" class="navbar-brand" style="cursor: pointer;">{{ business_name }}</a>
+        <button class="menu-toggle" onclick="toggleMenu()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
     </nav>
+    
+    <div class="drawer-overlay" id="drawer-overlay" onclick="toggleMenu()"></div>
+    <div class="navbar-links" id="nav-links">
+        <button class="menu-close" onclick="toggleMenu()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-left: 0.5rem; padding-right: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <div style="font-weight: 700; font-size: 1.1rem;">Menú Principal</div>
+            <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Cambiar tema" style="margin: 0;">
+                <svg class="theme-icon-sun" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg class="theme-icon-moon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <a href="/admin" class="nav-item {% if request.path == '/admin' %}active{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Agenda (Inicio)
+        </a>
+        <a href="/admin/historial" class="nav-item {% if request.path == '/admin/historial' %}active{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"></path><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path><path d="M12 7v5l4 2"></path></svg>
+            Historial
+        </a>
+        <a href="/admin/configuracion" class="nav-item {% if request.path == '/admin/configuracion' %}active{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Horarios
+        </a>
+        <a href="/admin/servicios" class="nav-item {% if request.path == '/admin/servicios' %}active{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            Servicios
+        </a>
+        <a href="/admin/turnos_fijos" class="nav-item {% if request.path == '/admin/turnos_fijos' %}active{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+            Turnos Fijos
+        </a>
+        <div style="flex-grow: 1;"></div>
+        <a href="/admin/cambiar-password" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Cambiar Contraseña
+        </a>
+        <a href="/admin/logout" class="nav-item nav-item-danger">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Cerrar Sesión
+        </a>
+    </div>
     <script>
         function toggleMenu() {
             const navLinks = document.getElementById('nav-links');

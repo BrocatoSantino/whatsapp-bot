@@ -293,6 +293,18 @@ async def dashboard(
     is_today = target_date == datetime.now(ar_tz).date()
     fecha_format = f"{DIAS[target_date.weekday()]} {target_date.day} de {MESES[target_date.month - 1]} {target_date.year}"
 
+    week_dates = []
+    # Generamos 7 días (3 días antes, el target, y 3 días después)
+    for i in range(-3, 4):
+        d = target_date + timedelta(days=i)
+        week_dates.append({
+            "date_str": d.strftime('%Y-%m-%d'),
+            "day_name": DIAS[d.weekday()][:3],
+            "day_number": d.day,
+            "is_today": d == datetime.now(ar_tz).date(),
+            "is_target": d == target_date
+        })
+
     services = db.query(Service).filter(Service.tenant_id == tenant.id, Service.active == True).all()
 
     return templates.TemplateResponse(
@@ -305,6 +317,7 @@ async def dashboard(
             "next_date": next_date,
             "fecha_format": fecha_format,
             "is_today": is_today,
+            "week_dates": week_dates,
             "total_turnos": total_turnos,
             "recaudacion": recaudacion,
             "business_name": tenant.name,
