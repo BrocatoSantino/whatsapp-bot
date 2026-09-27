@@ -184,16 +184,16 @@
         
         <form action="/admin/servicios/nuevo" method="POST">
     <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
-            <div class="form-row">
-                <div class="form-col" style="flex: 2;">
-                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Nombre del Servicio</label>
-                    <input type="text" name="name" required placeholder="Ej: Corte Clásico">
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label class="form-label">Nombre del Servicio</label>
+                    <input type="text" name="name" class="form-input" required placeholder="Ej: Corte Clásico">
                 </div>
-                <div class="form-col">
-                    <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Precio ($)</label>
-                    <input type="number" name="price" required placeholder="Ej: 8000">
+                <div>
+                    <label class="form-label">Precio ($)</label>
+                    <input type="number" name="price" class="form-input" required placeholder="Ej: 8000">
                 </div>
-                <button type="submit" class="btn btn-primary" style="height: 48px;">Agregar</button>
+                <button type="submit" class="btn-full" style="margin-top: 0.5rem; margin-bottom: 0;">Agregar</button>
             </div>
         </form>
     </div>
@@ -227,11 +227,11 @@
                             <span><strong style="color: var(--text-primary); font-size: 1.1rem;">${{ "{:,.0f}".format(service.price).replace(',', '.') }}</strong></span>
                         </div>
                     </div>
-                    <div class="service-actions">
-                        <button type="button" class="btn btn-outline" onclick="toggleEdit({{ service.id }})" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Editar</button>
-                        <form action="/admin/servicios/{{ service.id }}/eliminar" method="POST" style="margin: 0;" onsubmit="return confirm('¿Estás seguro de que querés eliminar este servicio?');">
+                    <div class="service-actions" style="display: flex; gap: 0.5rem; width: 100%; margin-top: 1rem;">
+                        <button type="button" class="btn-secondary" onclick="toggleEdit({{ service.id }})" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Editar</button>
+                        <form action="/admin/servicios/{{ service.id }}/eliminar" method="POST" style="margin: 0; flex: 1;" onsubmit="return confirm('¿Estás seguro de que querés eliminar este servicio?');">
     <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
-                            <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Eliminar</button>
+                            <button type="submit" class="btn-secondary" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); padding: 0.5rem 1rem; font-size: 0.8rem; width: 100%;">Eliminar</button>
                         </form>
                     </div>
                 </div>
@@ -239,24 +239,24 @@
                 <!-- Edit Mode -->
                 <form action="/admin/servicios/{{ service.id }}/editar" method="POST" class="edit-form" id="edit-form-{{ service.id }}">
     <input type="hidden" name="csrf_token" value="{{ get_csrf_token(request) if request else csrf_token }}">
-                    <div class="form-row" style="width: 100%; margin-bottom: 0;">
-                        <div class="form-col" style="flex: 2;">
-                            <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Nombre</label>
-                            <input type="text" name="name" value="{{ service.name }}" required>
+                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                        <div>
+                            <label class="form-label">Nombre</label>
+                            <input type="text" name="name" class="form-input" value="{{ service.name }}" required>
                         </div>
-                        <div class="form-col">
-                            <label style="display:block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">Precio ($)</label>
-                            <input type="number" name="price" value="{{ service.price }}" required>
+                        <div>
+                            <label class="form-label">Precio ($)</label>
+                            <input type="number" name="price" class="form-input" value="{{ service.price }}" required>
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: center; height: 48px; padding: 0 1rem;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); cursor: pointer;">
+                        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); cursor: pointer; margin: 0;">
                                 <input type="checkbox" name="active" value="true" {% if service.active %}checked{% endif %} style="width: auto; margin: 0;">
                                 Activo
                             </label>
                         </div>
-                        <div class="btn-group" style="display: flex; gap: 0.5rem; height: 48px;">
-                            <button type="button" class="btn btn-outline" onclick="toggleEdit({{ service.id }})">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" class="btn-secondary" onclick="toggleEdit({{ service.id }})">Cancelar</button>
+                            <button type="submit" class="btn-primary">Guardar</button>
                         </div>
                     </div>
                 </form>
