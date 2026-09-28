@@ -174,12 +174,23 @@
         .day-bubble.active .day-name, .day-bubble.active .day-number { color: var(--bg-primary); }
         .badge-today { position: absolute; top: -6px; background: var(--info); color: white; font-size: 0.55rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; border: 2px solid var(--bg-primary); }
         .bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        @media (max-width: 480px) {
+            .bento-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            .bento-item { padding: 1rem; }
+            .bento-value { font-size: 1.25rem; }
+            .week-nav-btn { width: 36px; height: 36px; font-size: 1.1rem; }
+        }
         .bento-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; backdrop-filter: blur(12px); }
         .bento-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
         .bento-value { font-size: 1.5rem; font-weight: 700; }
         .bento-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; color: var(--text-primary); }
         .btn-full { width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1rem; border-radius: 14px; background: linear-gradient(180deg, #ffffff 0%, #e5e5e5 100%); color: #000; font-size: 1rem; font-weight: 600; border: none; cursor: pointer; margin-bottom: 2.5rem; box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
         .btn-full:active { transform: scale(0.98); }
+        
+        /* Week navigation */
+        .week-nav-btn { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border); font-weight: bold; font-size: 1.25rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .week-nav-btn:hover { background: rgba(255,255,255,0.1); }
+        .week-nav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .timeline-header { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
         .timeline { position: relative; padding-left: 2rem; }
         .timeline::before { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: var(--border); }
