@@ -276,8 +276,8 @@ async def dashboard(
         if app.status in ['cancelled', 'no_show']:
             continue
             
-        if target_date == now.date() and app.status != 'completed':
-            app_datetime = datetime.combine(target_date, app.time)
+        if app.status != 'completed':
+            app_datetime = datetime.combine(app.date, app.time)
             if now > app_datetime + timedelta(minutes=30):
                 app.status = 'completed'
                 db.commit()
@@ -400,7 +400,12 @@ async def historial(
                 
     hours = total_minutes // 60
     mins = total_minutes % 60
-    time_str = f"{hours}h {mins}m" if hours > 0 else f"{mins}m"
+    if hours > 0 and mins > 0:
+        time_str = f"{hours}h {mins}m"
+    elif hours > 0:
+        time_str = f"{hours}h"
+    else:
+        time_str = f"{mins}m"
     
     week_range_str = f"{monday.day} {MESES[monday.month-1][:3]} - {sunday.day} {MESES[sunday.month-1][:3]}"
 

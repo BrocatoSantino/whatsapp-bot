@@ -64,7 +64,7 @@
         :root.light-mode .day-bubble.active, :root.light-mode .day-circle.active {
             background: var(--text-primary);
         }
-        :root.light-mode .timeline-item.status-completed .timeline-dot, :root.light-mode .timeline-item.status-pending .timeline-dot {
+        :root.light-mode .timeline-item.status-completed .timeline-dot, :root.light-mode .timeline-item.status-pending .timeline-dot, :root.light-mode .timeline-item.status-confirmed .timeline-dot {
             box-shadow: 0 0 0 4px #ffffff;
         }
         :root.light-mode .nav-item {
@@ -176,10 +176,10 @@
         .bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         @media (max-width: 480px) {
             .bento-grid { grid-template-columns: repeat(2, 1fr); }
-            .bento-grid.grid-3 { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+            .bento-grid.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
             .bento-grid.grid-3 .bento-item { padding: 0.75rem 0.25rem; }
-            .bento-grid.grid-3 .bento-label { font-size: 0.7rem; }
-            .bento-grid.grid-3 .bento-value { font-size: 1.1rem; }
+            .bento-grid.grid-3 .bento-label { font-size: 0.65rem; }
+            .bento-grid.grid-3 .bento-value { font-size: 1rem; word-break: break-word; }
             .bento-item { padding: 1rem; }
             .bento-value { font-size: 1.25rem; }
             .week-nav-btn { width: 36px; height: 36px; font-size: 1.1rem; }
@@ -205,7 +205,7 @@
         .appointment-card:active { transform: scale(0.98); background: rgba(30,30,30,0.8); }
         .client-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; }
         .service-name { font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
-        .status-pending .timeline-dot { border-color: var(--info); box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); background: var(--info); }
+        .status-pending .timeline-dot, .status-confirmed .timeline-dot { border-color: var(--info); box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); background: var(--info); }
         .status-completed .timeline-dot { border-color: var(--success); background: var(--success); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
         .status-completed .appointment-card { opacity: 0.7; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2); }
         .status-cancelled .timeline-dot { border-color: var(--danger); background: var(--danger); }
