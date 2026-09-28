@@ -137,6 +137,7 @@ async def cambiar_password_get(request: Request, tenant: Tenant | None = Depends
         request=request, name="cambiar_password.html",
         context={
             "business_name": tenant.name,
+            "current_username": tenant.username,
             "error": False,
             "success": False
         }
@@ -145,9 +146,10 @@ async def cambiar_password_get(request: Request, tenant: Tenant | None = Depends
 @router.post("/admin/cambiar-password", response_class=HTMLResponse)
 async def cambiar_password_post(
     request: Request,
+    new_username: str = Form(...),
     current_password: str = Form(...),
-    new_password: str = Form(...),
-    confirm_password: str = Form(...),
+    new_password: str = Form(None),
+    confirm_password: str = Form(None),
     tenant: Tenant | None = Depends(get_admin_session),
     db: Session = Depends(get_db),
     _csrf: None = Depends(verify_csrf)
@@ -161,47 +163,65 @@ async def cambiar_password_post(
             request=request, name="cambiar_password.html",
             context={
                 "business_name": tenant.name,
+                "current_username": tenant.username,
                 "error": True,
                 "error_msg": "La contraseña actual es incorrecta.",
                 "success": False
             }
         )
 
-    # Verificar que las contraseñas nuevas coincidan
-    if new_password != confirm_password:
-        return templates.TemplateResponse(
-            request=request, name="cambiar_password.html",
-            context={
-                "business_name": tenant.name,
-                "error": True,
-                "error_msg": "Las contraseñas nuevas no coinciden.",
-                "success": False
-            }
-        )
+    # Validar nuevo usuario (que no esté en uso por otro tenant)
+    if new_username != tenant.username:
+        existing = db.query(Tenant).filter(Tenant.username == new_username).first()
+        if existing:
+            return templates.TemplateResponse(
+                request=request, name="cambiar_password.html",
+                context={
+                    "business_name": tenant.name,
+                    "current_username": tenant.username,
+                    "error": True,
+                    "error_msg": "Ese nombre de usuario ya está en uso.",
+                    "success": False
+                }
+            )
+        tenant.username = new_username
 
-    # Verificar largo mínimo
-    if len(new_password) < 4:
-        return templates.TemplateResponse(
-            request=request, name="cambiar_password.html",
-            context={
-                "business_name": tenant.name,
-                "error": True,
-                "error_msg": "La contraseña debe tener al menos 4 caracteres.",
-                "success": False
-            }
-        )
+    # Validar y guardar nueva contraseña (si se especificó)
+    if new_password:
+        if new_password != confirm_password:
+            return templates.TemplateResponse(
+                request=request, name="cambiar_password.html",
+                context={
+                    "business_name": tenant.name,
+                    "current_username": tenant.username,
+                    "error": True,
+                    "error_msg": "Las contraseñas nuevas no coinciden.",
+                    "success": False
+                }
+            )
+        if len(new_password) < 4:
+            return templates.TemplateResponse(
+                request=request, name="cambiar_password.html",
+                context={
+                    "business_name": tenant.name,
+                    "current_username": tenant.username,
+                    "error": True,
+                    "error_msg": "La contraseña debe tener al menos 4 caracteres.",
+                    "success": False
+                }
+            )
+        tenant.password_hash = new_password
 
-    # Guardar nueva contraseña
-    tenant.password_hash = new_password
     db.commit()
 
     return templates.TemplateResponse(
         request=request, name="cambiar_password.html",
         context={
             "business_name": tenant.name,
+            "current_username": tenant.username,
             "error": False,
             "success": True,
-            "success_msg": "¡Contraseña actualizada correctamente!"
+            "success_msg": "¡Credenciales actualizadas correctamente!"
         }
     )
 
