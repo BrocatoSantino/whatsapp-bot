@@ -378,6 +378,7 @@ async def historial(
     total_revenue = 0
     total_minutes = 0
     completed_cuts = 0
+    recent_completed_cuts = []
     
     daily_counts = [0] * 7
     daily_dates = [(monday + timedelta(days=i)).strftime('%d/%m') for i in range(7)]
@@ -385,6 +386,7 @@ async def historial(
     for app in appointments:
         if app.status == 'completed':
             completed_cuts += 1
+            recent_completed_cuts.append(app)
             if app.service:
                 total_revenue += app.service.price
                 total_minutes += app.service.duration_minutes
@@ -392,6 +394,9 @@ async def historial(
             day_index = (app.date - monday).days
             if 0 <= day_index <= 6:
                 daily_counts[day_index] += 1
+                
+    recent_completed_cuts.sort(key=lambda x: (x.date, x.time), reverse=True)
+    recent_completed_cuts = recent_completed_cuts[:5]
                 
     hours = total_minutes // 60
     mins = total_minutes % 60
@@ -410,7 +415,8 @@ async def historial(
             "completed_cuts": completed_cuts,
             "daily_counts": daily_counts,
             "daily_dates": daily_dates,
-            "business_name": tenant.name
+            "business_name": tenant.name,
+            "recent_completed_cuts": recent_completed_cuts
         }
     )
 

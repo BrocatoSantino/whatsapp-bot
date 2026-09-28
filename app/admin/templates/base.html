@@ -164,10 +164,11 @@
         .week-slider-container { margin-bottom: 1.5rem; }
         .week-slider { display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 0.5rem; -ms-overflow-style: none; scrollbar-width: none; }
         .week-slider::-webkit-scrollbar { display: none; }
-        .day-bubble { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px; height: 75px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease; position: relative; text-decoration: none;}
+        .day-bubble { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 64px; height: 75px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease; position: relative; text-decoration: none; color: var(--text-secondary); }
+        .day-bubble:link, .day-bubble:visited { color: var(--text-secondary); text-decoration: none; }
         .day-bubble.calendar-btn { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
         .day-bubble:hover:not(.active) { background: rgba(255,255,255,0.06); }
-        .day-bubble.active { background: var(--text-primary); color: var(--bg-primary); }
+        .day-bubble.active, .day-bubble.active:link, .day-bubble.active:visited { background: var(--text-primary); color: var(--bg-primary); }
         .day-name { font-size: 0.75rem; font-weight: 500; margin-bottom: 2px; text-transform: uppercase; }
         .day-number { font-size: 1.35rem; font-weight: 700; line-height: 1; }
         .day-bubble.active .day-name, .day-bubble.active .day-number { color: var(--bg-primary); }
@@ -190,8 +191,8 @@
         .client-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; }
         .service-name { font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
         .status-pending .timeline-dot { border-color: var(--info); box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); background: var(--info); }
-        .status-completed .timeline-dot { border-color: var(--success); background: var(--success); }
-        .status-completed .appointment-card { opacity: 0.6; }
+        .status-completed .timeline-dot { border-color: var(--success); background: var(--success); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
+        .status-completed .appointment-card { opacity: 0.7; background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2); }
         .status-cancelled .timeline-dot { border-color: var(--danger); background: var(--danger); }
         .status-cancelled .appointment-card { opacity: 0.4; }
         .status-cancelled .client-name { text-decoration: line-through; }
