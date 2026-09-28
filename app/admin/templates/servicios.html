@@ -43,10 +43,10 @@
             {% for service in services %}
             <div class="service-card" id="service-card-{{ service.id }}" style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem;">
                 <!-- View Mode -->
-                <div class="service-view" id="service-view-{{ service.id }}" style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h3 style="margin-bottom: 0.25rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-                            {{ service.name }}
+                <div class="service-view" id="service-view-{{ service.id }}" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <div style="flex: 1; min-width: 0;">
+                        <h3 style="margin-bottom: 0.25rem; font-size: 1.1rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <span style="word-break: break-word;">{{ service.name }}</span>
                             {% if service.active %}
                             <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">ACTIVO</span>
                             {% else %}

@@ -273,7 +273,7 @@ async def dashboard(
     appointments = []
     now = datetime.now(ar_tz).replace(tzinfo=None)
     for app in raw_appointments:
-        if app.status in ['cancelled', 'no_show', 'completed']:
+        if app.status in ['cancelled', 'no_show']:
             continue
             
         if target_date == now.date() and app.status != 'completed':
@@ -281,7 +281,6 @@ async def dashboard(
             if now > app_datetime + timedelta(minutes=30):
                 app.status = 'completed'
                 db.commit()
-                continue
                 
         appointments.append(app)
         
@@ -294,14 +293,15 @@ async def dashboard(
     fecha_format = f"{DIAS[target_date.weekday()]} {target_date.day} de {MESES[target_date.month - 1]} {target_date.year}"
 
     week_dates = []
-    # Generamos 7 días (3 días antes, el target, y 3 días después)
-    for i in range(-3, 4):
-        d = target_date + timedelta(days=i)
+    # Generamos 7 días a partir de hoy (hoy y 6 días siguientes)
+    today_date = datetime.now(ar_tz).date()
+    for i in range(7):
+        d = today_date + timedelta(days=i)
         week_dates.append({
             "date_str": d.strftime('%Y-%m-%d'),
             "day_name": DIAS[d.weekday()][:3],
             "day_number": d.day,
-            "is_today": d == datetime.now(ar_tz).date(),
+            "is_today": d == today_date,
             "is_target": d == target_date
         })
 

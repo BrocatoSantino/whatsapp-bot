@@ -175,7 +175,11 @@
         .badge-today { position: absolute; top: -6px; background: var(--info); color: white; font-size: 0.55rem; padding: 2px 6px; border-radius: 10px; font-weight: bold; border: 2px solid var(--bg-primary); }
         .bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         @media (max-width: 480px) {
-            .bento-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            .bento-grid { grid-template-columns: repeat(2, 1fr); }
+            .bento-grid.grid-3 { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+            .bento-grid.grid-3 .bento-item { padding: 0.75rem 0.25rem; }
+            .bento-grid.grid-3 .bento-label { font-size: 0.7rem; }
+            .bento-grid.grid-3 .bento-value { font-size: 1.1rem; }
             .bento-item { padding: 1rem; }
             .bento-value { font-size: 1.25rem; }
             .week-nav-btn { width: 36px; height: 36px; font-size: 1.1rem; }
@@ -297,7 +301,6 @@
             color: var(--text-secondary);
             transition: all 0.2s ease;
             user-select: none;
-            flex-shrink: 0;
         }
         .day-circle.active {
             background: var(--text-primary);
@@ -333,9 +336,9 @@
 
         @media (max-width: 480px) {
             .day-circle {
-                width: 38px;
-                height: 38px;
-                font-size: 0.85rem;
+                width: 36px;
+                height: 36px;
+                font-size: 0.8rem;
             }
             .shift-row {
                 flex-direction: column;
