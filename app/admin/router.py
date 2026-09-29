@@ -248,48 +248,45 @@ async def dashboard(
     else:
         target_date = datetime.now(ar_tz).date()
 
-    if os.getenv("MOCK_DATA") == "True":
-        raw_appointments = get_mock_appointments(tenant.id, target_date=target_date)
-    else:
+    raw_appointments = get_appointments_by_date(db, target_date, tenant.id)
+        
+    # Auto-crear turnos de reglas recurrentes para este día
+    recurring_rules = db.query(RecurringAppointment).filter(
+        RecurringAppointment.tenant_id == tenant.id,
+        RecurringAppointment.day_of_week == target_date.weekday(),
+        RecurringAppointment.active == True
+    ).all()
+    
+    for rule in recurring_rules:
+        # Verificar si ya existe un appointment para esta regla en esta fecha
+        existing = db.query(Appointment).filter(
+            Appointment.tenant_id == tenant.id,
+            Appointment.date == target_date,
+            Appointment.time == rule.time,
+            Appointment.status.in_(['confirmed', 'pending', 'completed'])
+        ).first()
+        
+        if not existing:
+            from app.services.appointment import get_or_create_client
+            phone = rule.client_phone if rule.client_phone else f"fijo_{rule.id}"
+            client = get_or_create_client(db, phone, rule.client_name, tenant.id)
+            auto_apt = Appointment(
+                tenant_id=tenant.id,
+                client_id=client.id,
+                service_id=rule.service_id,
+                date=target_date,
+                time=rule.time,
+                status="confirmed"
+            )
+            db.add(auto_apt)
+            db.commit()
+    
+    # Re-fetch appointments after auto-creation
+    if recurring_rules:
         raw_appointments = get_appointments_by_date(db, target_date, tenant.id)
-        
-        # Auto-crear turnos de reglas recurrentes para este día
-        recurring_rules = db.query(RecurringAppointment).filter(
-            RecurringAppointment.tenant_id == tenant.id,
-            RecurringAppointment.day_of_week == target_date.weekday(),
-            RecurringAppointment.active == True
-        ).all()
-        
-        for rule in recurring_rules:
-            # Verificar si ya existe un appointment para esta regla en esta fecha
-            existing = db.query(Appointment).filter(
-                Appointment.tenant_id == tenant.id,
-                Appointment.date == target_date,
-                Appointment.time == rule.time,
-                Appointment.status.in_(['confirmed', 'pending', 'completed'])
-            ).first()
-            
-            if not existing:
-                from app.services.appointment import get_or_create_client
-                phone = rule.client_phone if rule.client_phone else f"fijo_{rule.id}"
-                client = get_or_create_client(db, phone, rule.client_name, tenant.id)
-                auto_apt = Appointment(
-                    tenant_id=tenant.id,
-                    client_id=client.id,
-                    service_id=rule.service_id,
-                    date=target_date,
-                    time=rule.time,
-                    status="confirmed"
-                )
-                db.add(auto_apt)
-                db.commit()
-        
-        # Re-fetch appointments after auto-creation
-        if recurring_rules:
-            raw_appointments = get_appointments_by_date(db, target_date, tenant.id)
-    
+
     recaudacion = sum(app.service.price for app in raw_appointments if app.service and app.status in ['confirmed', 'pending', 'completed'])
-    
+
     appointments = []
     now = datetime.now(ar_tz).replace(tzinfo=None)
     for app in raw_appointments:
@@ -305,7 +302,7 @@ async def dashboard(
         appointments.append(app)
         
     total_turnos = len(appointments)
-    
+
     prev_date = target_date - timedelta(days=1)
     next_date = target_date + timedelta(days=1)
     
@@ -411,14 +408,11 @@ async def historial(
         daily_dates = [(start_date + timedelta(days=i)).strftime('%d/%m') for i in range(7)]
         range_str = f"{start_date.day} {MESES[start_date.month-1][:3]} - {end_date.day} {MESES[end_date.month-1][:3]}"
 
-    if os.getenv("MOCK_DATA") == "True":
-        appointments = get_mock_appointments(tenant.id, start_date=start_date, end_date=end_date)
-    else:
-        appointments = db.query(Appointment).filter(
-            Appointment.tenant_id == tenant.id,
-            Appointment.date >= start_date,
-            Appointment.date <= end_date
-        ).all()
+    appointments = db.query(Appointment).filter(
+        Appointment.tenant_id == tenant.id,
+        Appointment.date >= start_date,
+        Appointment.date <= end_date
+    ).all()
 
     total_revenue = 0
     total_minutes = 0
