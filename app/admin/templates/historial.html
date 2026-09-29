@@ -25,18 +25,18 @@
 
     <h2 class="timeline-header" style="font-size: 1.25rem;">Resumen {% if mode == 'week' %}Semanal{% else %}Mensual{% endif %}</h2>
 
-    <div class="bento-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 2rem;">
-        <div class="bento-item" style="padding: 1rem; text-align: center;">
-            <span class="bento-label">Cortes</span>
-            <span class="bento-value" style="font-size: 1.5rem;">{{ completed_cuts }}</span>
+    <div class="bento-grid" style="grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 2rem;">
+        <div class="bento-item" style="padding: 0.75rem 0.25rem; text-align: center;">
+            <span class="bento-label" style="font-size: 0.8rem;">Cortes</span>
+            <span class="bento-value" style="font-size: clamp(1.1rem, 3vw, 1.5rem);">{{ completed_cuts }}</span>
         </div>
-        <div class="bento-item" style="padding: 1rem; text-align: center;">
-            <span class="bento-label">Tiempo</span>
-            <span class="bento-value" style="font-size: 1.5rem;">{{ time_str }}</span>
+        <div class="bento-item" style="padding: 0.75rem 0.25rem; text-align: center;">
+            <span class="bento-label" style="font-size: 0.8rem;">Tiempo</span>
+            <span class="bento-value" style="font-size: clamp(1.1rem, 3vw, 1.5rem);">{{ time_str }}</span>
         </div>
-        <div class="bento-item" style="padding: 1rem; text-align: center;">
-            <span class="bento-label">Ingresos</span>
-            <span class="bento-value" style="font-size: 1.5rem; color: var(--success);">${{ "{:,.0f}".format(total_revenue).replace(",", ".") }}</span>
+        <div class="bento-item" style="padding: 0.75rem 0.25rem; text-align: center;">
+            <span class="bento-label" style="font-size: 0.8rem;">Ingresos</span>
+            <span class="bento-value" style="font-size: clamp(1rem, 2.5vw, 1.5rem); color: var(--success);">${{ "{:,.0f}".format(total_revenue).replace(",", ".") }}</span>
         </div>
     </div>
 
@@ -89,12 +89,16 @@ document.addEventListener('DOMContentLoaded', function() {
         labels = dailyDates;
     } else {
         const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-        labels = days.map((day, index) => `${day}\n${dailyDates[index]}`);
+        labels = days.map((day, index) => [day, dailyDates[index]]);
     }
 
     const isLight = document.documentElement.classList.contains('light-mode');
     const textColor = isLight ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
     const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.05)';
+
+    let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, '#fc4c02');
+    gradient.addColorStop(1, '#ff7b42');
 
     new Chart(ctx, {
         type: 'bar',
@@ -103,8 +107,11 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 label: 'Cortes completados',
                 data: dailyCounts,
-                backgroundColor: '#fc4c02',
-                borderRadius: 4
+                backgroundColor: gradient,
+                borderRadius: 8,          // Bordes bien redondeados
+                borderSkipped: false,     // Redondea abajo también si la barra sube
+                maxBarThickness: 35,      // Evita que las barras sean demasiado anchas
+                minBarLength: 4           // Para que los '0' se vean como un puntito
             }]
         },
         options: {
@@ -144,10 +151,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 x: {
                     ticks: {
                         color: textColor,
-                        autoSkip: true,
-                        maxTicksLimit: isMonth ? 7 : 7,
+                        autoSkip: false,
                         maxRotation: 0,
-                        font: { size: 10 }
+                        font: { 
+                            size: 11,
+                            family: "'Inter', sans-serif",
+                            weight: '500'
+                        },
+                        padding: 10
                     },
                     grid: {
                         display: false,

@@ -399,8 +399,9 @@ async def historial(
         _, last_day = calendar.monthrange(target_year, target_month)
         end_date = date(target_year, target_month, last_day)
 
-        daily_counts = [0] * last_day
-        daily_dates = [str(i) for i in range(1, last_day + 1)]
+        num_weeks = (last_day + 6) // 7
+        daily_counts = [0] * num_weeks
+        daily_dates = [f"Sem {i+1}" for i in range(num_weeks)]
         range_str = f"{MESES[target_month-1]} {target_year}"
     else:
         start_date = now - timedelta(days=now.weekday()) + timedelta(weeks=offset)
@@ -435,7 +436,8 @@ async def historial(
             day_index = (app.date - start_date).days
             if mode == 'month':
                 if 0 <= day_index < last_day:
-                    daily_counts[day_index] += 1
+                    week_index = day_index // 7
+                    daily_counts[week_index] += 1
             else:
                 if 0 <= day_index <= 6:
                     daily_counts[day_index] += 1
