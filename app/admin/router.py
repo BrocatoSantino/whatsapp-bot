@@ -79,28 +79,6 @@ async def login_get(request: Request, tenant: Tenant | None = Depends(get_admin_
     csrf_token = secrets.token_hex(16)
     request.session["csrf_token"] = csrf_token
     
-
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JSONResponse({
-            'completed_cuts': completed_cuts,
-            'time_str': time_str,
-            'total_revenue': total_revenue,
-            'range_str': range_str,
-            'daily_counts': daily_counts,
-            'daily_dates': daily_dates,
-            'mode': mode,
-            'offset': offset,
-            'recent_completed_cuts': [
-                {
-                    'client': appt.client.name if appt.client else 'Desconocido',
-                    'service': appt.service.name if appt.service else 'Servicio',
-                    'date': appt.date.strftime('%d/%m'),
-                    'time': appt.time.strftime('%H:%M'),
-                    'price': appt.service.price if appt.service else 0
-                } for appt in recent_completed_cuts
-            ]
-        })
-
     return templates.TemplateResponse(
         request=request, name="login.html", context={"error": False, "business_name": "TurnoFlow", "hide_navbar": True, "csrf_token": csrf_token}
     )
@@ -473,7 +451,6 @@ async def historial(
         time_str = f"{hours}h"
     else:
         time_str = f"{mins}m"
-
     return templates.TemplateResponse(
         request=request,
         name="historial.html",

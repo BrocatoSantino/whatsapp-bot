@@ -1,4 +1,5 @@
-{% extends "base.html" %}
+with open('/home/arkadain/proyectos/whatsapp-peluqueria/app/admin/templates/historial.html', 'w') as f:
+    f.write('''{% extends "base.html" %}
 
 {% block extra_css %}
 {% endblock %}
@@ -89,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
         labels = dailyDates;
     } else {
         const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-        labels = days.map((day, index) => `${day}\n${dailyDates[index]}`);
+        labels = days.map((day, index) => `${day}\\n${dailyDates[index]}`);
     }
 
     const isLight = document.documentElement.classList.contains('light-mode');
@@ -164,3 +165,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+''')
