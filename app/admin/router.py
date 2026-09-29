@@ -372,37 +372,58 @@ async def update_appointment_status(
 
 @router.get("/admin/historial", response_class=HTMLResponse)
 async def historial(
-    request: Request, 
-    week_offset: int = 0,
+    request: Request,
+    offset: int = 0,
+    mode: str = 'week',
     db: Session = Depends(get_db),
     tenant: Tenant | None = Depends(get_admin_session)
 ):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
-    
+
     ar_tz = timezone(timedelta(hours=-3))
     now = datetime.now(ar_tz).date()
-    
-    monday = now - timedelta(days=now.weekday()) + timedelta(weeks=week_offset)
-    sunday = monday + timedelta(days=6)
-    
+
+    import calendar
+    if mode == 'month':
+        target_month = now.month + offset
+        target_year = now.year
+        while target_month > 12:
+            target_month -= 12
+            target_year += 1
+        while target_month < 1:
+            target_month += 12
+            target_year -= 1
+
+        start_date = date(target_year, target_month, 1)
+        _, last_day = calendar.monthrange(target_year, target_month)
+        end_date = date(target_year, target_month, last_day)
+
+        daily_counts = [0] * last_day
+        daily_dates = [str(i) for i in range(1, last_day + 1)]
+        range_str = f"{MESES[target_month-1]} {target_year}"
+    else:
+        start_date = now - timedelta(days=now.weekday()) + timedelta(weeks=offset)
+        end_date = start_date + timedelta(days=6)
+
+        daily_counts = [0] * 7
+        daily_dates = [(start_date + timedelta(days=i)).strftime('%d/%m') for i in range(7)]
+        range_str = f"{start_date.day} {MESES[start_date.month-1][:3]} - {end_date.day} {MESES[end_date.month-1][:3]}"
+
     if os.getenv("MOCK_DATA") == "True":
-        appointments = get_mock_appointments(tenant.id, start_date=monday, end_date=sunday)
+        appointments = get_mock_appointments(tenant.id, start_date=start_date, end_date=end_date)
     else:
         appointments = db.query(Appointment).filter(
             Appointment.tenant_id == tenant.id,
-            Appointment.date >= monday,
-            Appointment.date <= sunday
+            Appointment.date >= start_date,
+            Appointment.date <= end_date
         ).all()
-    
+
     total_revenue = 0
     total_minutes = 0
     completed_cuts = 0
     recent_completed_cuts = []
-    
-    daily_counts = [0] * 7
-    daily_dates = [(monday + timedelta(days=i)).strftime('%d/%m') for i in range(7)]
-    
+
     for app in appointments:
         if app.status == 'completed':
             completed_cuts += 1
@@ -410,14 +431,18 @@ async def historial(
             if app.service:
                 total_revenue += app.service.price
                 total_minutes += app.service.duration_minutes
-                
-            day_index = (app.date - monday).days
-            if 0 <= day_index <= 6:
-                daily_counts[day_index] += 1
-                
+
+            day_index = (app.date - start_date).days
+            if mode == 'month':
+                if 0 <= day_index < last_day:
+                    daily_counts[day_index] += 1
+            else:
+                if 0 <= day_index <= 6:
+                    daily_counts[day_index] += 1
+
     recent_completed_cuts.sort(key=lambda x: (x.date, x.time), reverse=True)
     recent_completed_cuts = recent_completed_cuts[:5]
-                
+
     hours = total_minutes // 60
     mins = total_minutes % 60
     if hours > 0 and mins > 0:
@@ -426,21 +451,22 @@ async def historial(
         time_str = f"{hours}h"
     else:
         time_str = f"{mins}m"
-    
-    week_range_str = f"{monday.day} {MESES[monday.month-1][:3]} - {sunday.day} {MESES[sunday.month-1][:3]}"
 
     return templates.TemplateResponse(
-        request=request, 
-        name="historial.html", 
+        request=request,
+        name="historial.html",
         context={
-            "week_offset": week_offset,
-            "week_range_str": week_range_str,
-            "total_revenue": total_revenue,
-            "time_str": time_str,
-            "completed_cuts": completed_cuts,
-            "daily_counts": daily_counts,
-            "daily_dates": daily_dates,
             "business_name": tenant.name,
+            "appointments": appointments,
+            "total_revenue": total_revenue,
+            "completed_cuts": completed_cuts,
+            "time_str": time_str,
+            "daily_counts": json.dumps(daily_counts),
+            "daily_dates": json.dumps(daily_dates),
+            "range_str": range_str,
+            "offset": offset,
+            "mode": mode,
+            "disable_next": offset >= 0,
             "recent_completed_cuts": recent_completed_cuts
         }
     )
@@ -473,6 +499,11 @@ async def configuracion_get(
     except:
         business_shifts = []
 
+    try:
+        day_overrides = json.loads(tenant.day_overrides or '{}')
+    except:
+        day_overrides = {}
+
     return templates.TemplateResponse(
         request=request,
         name="configuracion.html",
@@ -480,6 +511,7 @@ async def configuracion_get(
             "business_name": tenant.name,
             "working_days": working_days,
             "business_shifts": business_shifts,
+            "day_overrides": day_overrides,
             "blocked_times": blocked_times,
             "slot_duration": tenant.slot_duration_minutes,
             "services": services
@@ -491,6 +523,7 @@ async def update_horarios(
     request: Request,
     working_days: str = Form(...),
     business_shifts: str = Form(...),
+    day_overrides: str = Form("{}"),
     slot_duration: int = Form(...),
     db: Session = Depends(get_db),
     tenant: Tenant | None = Depends(get_admin_session),
@@ -503,9 +536,11 @@ async def update_horarios(
         # Validar JSON básico
         json.loads(working_days)
         json.loads(business_shifts)
+        json.loads(day_overrides)
         
         tenant.working_days = working_days
         tenant.business_shifts = business_shifts
+        tenant.day_overrides = day_overrides
         if slot_duration >= 5:
             tenant.slot_duration_minutes = slot_duration
         db.commit()

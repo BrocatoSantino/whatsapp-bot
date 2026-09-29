@@ -16,12 +16,21 @@ def get_available_dates(db: Session, tenant_id: int, days_ahead: int = 7) -> lis
     except (json.JSONDecodeError, TypeError):
         working_days = [0, 1, 2, 3, 4, 5]
         
+    try:
+        overrides = json.loads(tenant.day_overrides or '{}')
+    except (json.JSONDecodeError, TypeError):
+        overrides = {}
+        
     # Hora local de Argentina (UTC-3)
     ar_tz = timezone(timedelta(hours=-3))
     current_date = datetime.now(ar_tz).date()
     
     while len(available_dates) < days_ahead:
-        if current_date.weekday() in working_days:
+        day_str = str(current_date.weekday())
+        is_working_day = current_date.weekday() in working_days
+        has_override = day_str in overrides and len(overrides[day_str]) > 0
+        
+        if is_working_day or has_override:
             # Check if there is a full day block
             full_block = db.query(BlockedTime).filter(
                 BlockedTime.tenant_id == tenant_id,
@@ -50,11 +59,21 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
         return []
     
     duration = service.duration_minutes
+    
+    day_str = str(target_date.weekday())
     try:
-        business_shifts = json.loads(tenant.business_shifts)
+        overrides = json.loads(tenant.day_overrides or '{}')
     except (json.JSONDecodeError, TypeError):
-        business_shifts = []
+        overrides = {}
         
+    if day_str in overrides and overrides[day_str]:
+        business_shifts = overrides[day_str]
+    else:
+        try:
+            business_shifts = json.loads(tenant.business_shifts)
+        except (json.JSONDecodeError, TypeError):
+            business_shifts = []
+            
     slot_duration_minutes = tenant.slot_duration_minutes
     
     # Obtiene turnos existentes

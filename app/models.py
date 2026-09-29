@@ -20,6 +20,7 @@ class Tenant(Base):
     # Configuración de horarios por empresa (JSON guardado como String)
     working_days = Column(String, default='[0, 1, 2, 3, 4, 5]')  # Lunes a Sábado por defecto
     business_shifts = Column(String, default='[{"start": "09:30", "end": "12:30"}, {"start": "16:00", "end": "20:30"}]')
+    day_overrides = Column(String, default='{}') # Excepciones de horario por día (0=Lunes, 6=Domingo)
     slot_duration_minutes = Column(Integer, default=45)
     
     created_at = Column(DateTime, server_default=func.now())
