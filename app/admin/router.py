@@ -538,6 +538,7 @@ async def update_horarios(
         tenant.day_overrides = day_overrides
         if slot_duration >= 5:
             tenant.slot_duration_minutes = slot_duration
+            db.query(Service).filter(Service.tenant_id == tenant.id).update({"duration_minutes": slot_duration})
         db.commit()
     except Exception as e:
         db.rollback()
