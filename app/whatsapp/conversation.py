@@ -526,7 +526,7 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
             e_fmt1 = format_time(max(part1))
             rows.append({
                 "id": f"part_{base_id}_1",
-                "title": f"{icon} {title_prefix} (1/2)",
+                "title": f"{icon} {title_prefix} 1",
                 "description": f"De {s_fmt1} a {e_fmt1}"
             })
             
@@ -534,7 +534,7 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
             e_fmt2 = format_time(max(part2))
             rows.append({
                 "id": f"part_{base_id}_2",
-                "title": f"{icon} {title_prefix} (2/2)",
+                "title": f"{icon} {title_prefix} 2",
                 "description": f"De {s_fmt2} a {e_fmt2}"
             })
         elif part_list:
