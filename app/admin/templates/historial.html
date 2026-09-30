@@ -75,13 +75,14 @@
 
 </div>
 
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('weeklyChart').getContext('2d');
     
     const dailyCounts = {{ daily_counts | tojson }};
-    const dailyDates = {{ daily_dates | safe }};
+    const dailyDates = {{ daily_dates | tojson }};
     const isMonth = "{{ mode }}" === "month";
     
     let labels = [];
@@ -89,34 +90,42 @@ document.addEventListener('DOMContentLoaded', function() {
         labels = dailyDates;
     } else {
         const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-        labels = days.map((day, index) => [day, dailyDates[index]]);
+        // Strava just shows the day or date. We can show both or just the day to make it clean.
+        labels = days; 
     }
 
     const isLight = document.documentElement.classList.contains('light-mode');
     const textColor = isLight ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
     const gridColor = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.05)';
+    const brandColor = '#fc4c02'; // Naranja Turnoflow
 
+    // Gradient below the line
     let gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, '#fc4c02');
-    gradient.addColorStop(1, '#ff7b42');
+    gradient.addColorStop(0, 'rgba(252, 76, 2, 0.4)'); // Transparente arriba
+    gradient.addColorStop(1, 'rgba(252, 76, 2, 0.0)'); // Transparente abajo
 
     new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Cortes completados',
+                label: 'Cortes',
                 data: dailyCounts,
                 backgroundColor: gradient,
-                borderRadius: 8,          // Bordes bien redondeados
-                borderSkipped: false,     // Redondea abajo también si la barra sube
-                maxBarThickness: 35,      // Evita que las barras sean demasiado anchas
-                minBarLength: 4           // Para que los '0' se vean como un puntito
+                borderColor: brandColor,
+                borderWidth: 2,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: brandColor,
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: true,
+                tension: 0.1 // Ligeramente curvo pero bastante recto como strava
             }]
         },
         options: {
             layout: {
-                padding: { left: 0, right: 0 }
+                padding: { left: 10, right: 10, top: 20, bottom: 0 }
             },
             responsive: true,
             maintainAspectRatio: false,
@@ -141,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ticks: {
                         stepSize: 1, 
                         color: textColor,
-                        font: { size: 11 }
+                        font: { size: 11, family: "'Inter', sans-serif" }
                     },
                     grid: {
                         color: gridColor,
@@ -153,16 +162,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         color: textColor,
                         autoSkip: false,
                         maxRotation: 0,
-                        font: { 
-                            size: 11,
-                            family: "'Inter', sans-serif",
-                            weight: '500'
-                        },
+                        font: { size: 10, family: "'Inter', sans-serif", weight: '500' },
                         padding: 10
                     },
                     grid: {
-                        display: false,
-                        drawBorder: false
+                        display: true,
+                        color: gridColor,
+                        drawBorder: false,
+                        tickLength: 0
                     }
                 }
             },
@@ -174,4 +181,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
 {% endblock %}
