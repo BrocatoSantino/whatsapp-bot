@@ -515,22 +515,39 @@ async def _handle_choosing_date(phone: str, message: str, conv: dict, db: Sessio
     tarde = [t for t in slots if t.hour >= 14]
 
     rows = []
-    if manana:
-        start_fmt = format_time(min(manana))
-        end_fmt = format_time(max(manana))
-        rows.append({
-            "id": "part_manana",
-            "title": "🌅 Mañana",
-            "description": f"De {start_fmt} a {end_fmt}"
-        })
-    if tarde:
-        start_fmt = format_time(min(tarde))
-        end_fmt = format_time(max(tarde))
-        rows.append({
-            "id": "part_tarde",
-            "title": "☀️ Tarde",
-            "description": f"De {start_fmt} a {end_fmt}"
-        })
+    
+    def add_part(part_list, base_id, title_prefix, icon):
+        if len(part_list) > 10:
+            mid = len(part_list) // 2
+            part1 = part_list[:mid]
+            part2 = part_list[mid:]
+            
+            s_fmt1 = format_time(min(part1))
+            e_fmt1 = format_time(max(part1))
+            rows.append({
+                "id": f"part_{base_id}_1",
+                "title": f"{icon} {title_prefix} (1/2)",
+                "description": f"De {s_fmt1} a {e_fmt1}"
+            })
+            
+            s_fmt2 = format_time(min(part2))
+            e_fmt2 = format_time(max(part2))
+            rows.append({
+                "id": f"part_{base_id}_2",
+                "title": f"{icon} {title_prefix} (2/2)",
+                "description": f"De {s_fmt2} a {e_fmt2}"
+            })
+        elif part_list:
+            s_fmt = format_time(min(part_list))
+            e_fmt = format_time(max(part_list))
+            rows.append({
+                "id": f"part_{base_id}",
+                "title": f"{icon} {title_prefix}",
+                "description": f"De {s_fmt} a {e_fmt}"
+            })
+
+    add_part(manana, "manana", "Mañana", "🌅")
+    add_part(tarde, "tarde", "Tarde", "☀️")
 
     if not rows:
         await send_message(phone,
@@ -574,19 +591,30 @@ async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db:
             await _send_date_list(phone, service_id, service_name, service_price, db, tenant)
         return
 
-    if message not in ["part_manana", "part_tarde"]:
+    if message not in ["part_manana", "part_manana_1", "part_manana_2", "part_tarde", "part_tarde_1", "part_tarde_2"]:
         await send_message(phone, "Por favor, elegí tocando uno de los botones de arriba.", tenant.wa_phone_number_id, tenant.wa_access_token)
         return
 
     slots_data = conv["data"].get("slots", [])
+    slots_time = [datetime.time.fromisoformat(s) for s in slots_data]
+    
+    manana = [t for t in slots_time if t.hour < 14]
+    tarde = [t for t in slots_time if t.hour >= 14]
+    
     filtered_slots = []
     
-    for slot_iso in slots_data:
-        t = datetime.time.fromisoformat(slot_iso)
-        if message == "part_manana" and t.hour < 14:
-            filtered_slots.append(slot_iso)
-        elif message == "part_tarde" and t.hour >= 14:
-            filtered_slots.append(slot_iso)
+    if message == "part_manana":
+        filtered_slots = [t.isoformat() for t in manana]
+    elif message == "part_manana_1":
+        filtered_slots = [t.isoformat() for t in manana[:len(manana)//2]]
+    elif message == "part_manana_2":
+        filtered_slots = [t.isoformat() for t in manana[len(manana)//2:]]
+    elif message == "part_tarde":
+        filtered_slots = [t.isoformat() for t in tarde]
+    elif message == "part_tarde_1":
+        filtered_slots = [t.isoformat() for t in tarde[:len(tarde)//2]]
+    elif message == "part_tarde_2":
+        filtered_slots = [t.isoformat() for t in tarde[len(tarde)//2:]]
 
     if not filtered_slots:
         await send_message(phone, "No hay horarios en esa franja. Escribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
