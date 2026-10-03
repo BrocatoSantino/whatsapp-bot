@@ -665,6 +665,13 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
             await _handle_choosing_date(phone, f"date_{chosen_date_iso}", conv, db, tenant)
         return
 
+    # Si el usuario tocó otra franja horaria desde un mensaje anterior, volver a procesarla
+    part_of_day_options = ["part_manana", "part_manana_1", "part_manana_2", "part_tarde", "part_tarde_1", "part_tarde_2"]
+    if message in part_of_day_options:
+        update_conversation(db, tenant.id, phone, "CHOOSING_PART_OF_DAY", conv["data"])
+        await _handle_choosing_part_of_day(phone, message, conv, db, tenant)
+        return
+
     slots_data = conv["data"].get("filtered_slots", conv["data"].get("slots", []))
     chosen_time = None
 
