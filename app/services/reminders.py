@@ -1,3 +1,4 @@
+import os
 import datetime
 import logging
 from sqlalchemy.orm import Session
@@ -29,12 +30,20 @@ async def send_tomorrow_reminders():
         
         logger.info(f"Enviando {len(appointments)} recordatorios para {tomorrow}")
         
+        TEST_PHONES = [p.strip() for p in os.getenv("EXCLUDED_REMINDER_PHONES", "3329606324").split(",") if p.strip()]
+
         for apt in appointments:
             if not apt.client or not apt.client.phone or not apt.tenant:
                 continue
                 
-            service_name = apt.service.name if apt.service else "Corte de pelo"
             phone = apt.client.phone
+            
+            # Omitir envio de recordatorio si el numero coincide con la lista de prueba/excluidos
+            if any(phone.endswith(tp) for tp in TEST_PHONES):
+                logger.info(f"Omitiendo recordatorio para el número de prueba {phone} (turno {apt.id})")
+                continue
+
+            service_name = apt.service.name if apt.service else "Corte de pelo"
             tenant = apt.tenant
             
             components = [
