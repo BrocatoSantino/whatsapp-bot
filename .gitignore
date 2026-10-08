@@ -2,9 +2,16 @@
 venv/
 env/
 .venv/
-.env
 
-# Archivos de Python
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+
+# Archivos de Python y compilación
 __pycache__/
 *.pyc
 *.pyo
@@ -26,14 +33,45 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.bak
 
-# Archivos de la base de datos local
+# Testing & Cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Bases de datos locales y volcados
 *.db
 *.sqlite3
+*.sql
+*.dump
 
-# Logs
+# Logs y temporales
 *.log
+*.tmp
+scratch/
+temp/
+tmp/
+
+# Vercel CLI
+.vercel/
+
+# IDEs y editores
+.vscode/
+.idea/
+.cursor/
+.gemini/
 
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
+
+# Configuración y skills locales de IA (Antigravity)
+.agents/
+
+# Scripts locales de mantenimiento y seeding con credenciales / tokens
+add_tenant*.py
+check_*.py
+fix_*.py
+*seed*.py
+*_raw*.py
