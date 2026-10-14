@@ -28,9 +28,14 @@ def get_available_dates(db: Session, tenant_id: int, days_ahead: int = 7) -> lis
     while len(available_dates) < days_ahead:
         day_str = str(current_date.weekday())
         is_working_day = current_date.weekday() in working_days
-        has_override = day_str in overrides and len(overrides[day_str]) > 0
+        has_override = day_str in overrides
         
-        if is_working_day or has_override:
+        if has_override:
+            day_is_open = len(overrides[day_str]) > 0
+        else:
+            day_is_open = is_working_day
+            
+        if day_is_open:
             # Check if there is a full day block
             full_block = db.query(BlockedTime).filter(
                 BlockedTime.tenant_id == tenant_id,
@@ -48,7 +53,8 @@ def get_available_dates(db: Session, tenant_id: int, days_ahead: int = 7) -> lis
 def get_available_slots(db: Session, target_date: date, service_id: int, tenant_id: int) -> list[time]:
     """
     Obtiene los horarios disponibles para un servicio en una fecha específica para un tenant.
-    Soporta turnos cortados y filtrado por excepciones (BlockedTime).
+    Soporta turnos cortados, horarios de corrido, solapamiento real de intervalos
+    y filtrado por excepciones (BlockedTime).
     """
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
     if not tenant:
@@ -59,6 +65,7 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
         return []
     
     duration = service.duration_minutes
+    slot_duration_minutes = tenant.slot_duration_minutes or 45
     
     day_str = str(target_date.weekday())
     try:
@@ -66,38 +73,35 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
     except (json.JSONDecodeError, TypeError):
         overrides = {}
         
-    if day_str in overrides and overrides[day_str]:
+    if day_str in overrides:
         business_shifts = overrides[day_str]
     else:
         try:
-            business_shifts = json.loads(tenant.business_shifts)
+            business_shifts = json.loads(tenant.business_shifts or '[]')
         except (json.JSONDecodeError, TypeError):
             business_shifts = []
             
-    slot_duration_minutes = tenant.slot_duration_minutes
+    if not business_shifts:
+        return []
     
-    # Obtiene turnos existentes
+    # Recopilar todos los intervalos ocupados (busy_start, busy_end) para target_date
+    busy_intervals = []
+
+    # 1. Turnos existentes confirmados / pendientes / completados
     appointments = db.query(Appointment).filter(
         Appointment.tenant_id == tenant_id,
         Appointment.date == target_date,
         Appointment.status.in_(['confirmed', 'pending', 'completed'])
     ).all()
     
-    # Calcula slots ocupados por turnos
-    occupied_slots = set()
     for apt in appointments:
         apt_service = db.query(Service).filter(Service.id == apt.service_id).first()
-        if apt_service:
-            apt_duration = apt_service.duration_minutes
-            start_datetime = datetime.combine(target_date, apt.time)
-            end_datetime = start_datetime + timedelta(minutes=apt_duration)
-            
-            current = start_datetime
-            while current < end_datetime:
-                occupied_slots.add(current.time())
-                current += timedelta(minutes=slot_duration_minutes)
+        apt_duration = apt_service.duration_minutes if apt_service else slot_duration_minutes
+        apt_start = datetime.combine(target_date, apt.time)
+        apt_end = apt_start + timedelta(minutes=apt_duration)
+        busy_intervals.append((apt_start, apt_end))
                 
-    # Slots ocupados por turnos fijos recurrentes
+    # 2. Slots ocupados por turnos fijos recurrentes
     from app.models import RecurringAppointment
     recurring = db.query(RecurringAppointment).filter(
         RecurringAppointment.tenant_id == tenant_id,
@@ -106,32 +110,35 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
     ).all()
     for rec in recurring:
         rec_service = db.query(Service).filter(Service.id == rec.service_id).first()
-        if rec_service:
-            rec_duration = rec_service.duration_minutes
-            rec_start = datetime.combine(target_date, rec.time)
-            rec_end = rec_start + timedelta(minutes=rec_duration)
-            current = rec_start
-            while current < rec_end:
-                occupied_slots.add(current.time())
-                current += timedelta(minutes=slot_duration_minutes)
+        rec_duration = rec_service.duration_minutes if rec_service else slot_duration_minutes
+        rec_start = datetime.combine(target_date, rec.time)
+        rec_end = rec_start + timedelta(minutes=rec_duration)
+        busy_intervals.append((rec_start, rec_end))
                 
-    # Obtiene bloqueos parciales para el día
+    # 3. Bloqueos parciales para el día
     partial_blocks = db.query(BlockedTime).filter(
         BlockedTime.tenant_id == tenant_id,
         BlockedTime.date == target_date,
         BlockedTime.start_time.isnot(None),
         BlockedTime.end_time.isnot(None)
     ).all()
+    for block in partial_blocks:
+        b_start = datetime.combine(target_date, block.start_time)
+        b_end = datetime.combine(target_date, block.end_time)
+        busy_intervals.append((b_start, b_end))
     
     available_slots = []
     
     ar_tz = timezone(timedelta(hours=-3))
     now = datetime.now(ar_tz).replace(tzinfo=None)
     
-    # Genera slots para cada turno
+    # Genera slots candidatos para cada turno
     for shift in business_shifts:
-        start_hour, start_minute = map(int, shift["start"].split(":"))
-        end_hour, end_minute = map(int, shift["end"].split(":"))
+        try:
+            start_hour, start_minute = map(int, shift["start"].split(":"))
+            end_hour, end_minute = map(int, shift["end"].split(":"))
+        except (ValueError, KeyError, AttributeError):
+            continue
         
         start_datetime = datetime.combine(target_date, time(start_hour, start_minute))
         end_datetime = datetime.combine(target_date, time(end_hour, end_minute))
@@ -139,35 +146,23 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
         current = start_datetime
         
         while current + timedelta(minutes=duration) <= end_datetime:
-            if target_date == now.date() and current <= now:
+            slot_start = current
+            slot_end = current + timedelta(minutes=duration)
+
+            if target_date == now.date() and slot_start <= now:
                 current += timedelta(minutes=slot_duration_minutes)
                 continue
                 
+            # Dos intervalos [slot_start, slot_end) y [busy_start, busy_end) se solapan sii:
+            # slot_start < busy_end and busy_start < slot_end
             is_free = True
-            check_time = current
-            end_check = current + timedelta(minutes=duration)
-            
-            while check_time < end_check:
-                ct_time = check_time.time()
-                
-                # Check si está ocupado por otro turno
-                if ct_time in occupied_slots:
+            for busy_start, busy_end in busy_intervals:
+                if slot_start < busy_end and busy_start < slot_end:
                     is_free = False
                     break
                     
-                # Check si choca con un bloqueo parcial
-                for block in partial_blocks:
-                    if block.start_time <= ct_time < block.end_time:
-                        is_free = False
-                        break
-                        
-                if not is_free:
-                    break
-                    
-                check_time += timedelta(minutes=slot_duration_minutes)
-                
             if is_free:
-                available_slots.append(current.time())
+                available_slots.append(slot_start.time())
                 
             current += timedelta(minutes=slot_duration_minutes)
             

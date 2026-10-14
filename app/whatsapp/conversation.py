@@ -591,6 +591,12 @@ async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db:
             await _send_date_list(phone, service_id, service_name, service_price, db, tenant)
         return
 
+    # Si el usuario tocó otra fecha desde un mensaje anterior, procesar esa fecha
+    if message.startswith("date_"):
+        update_conversation(db, tenant.id, phone, "CHOOSING_DATE", conv["data"])
+        await _handle_choosing_date(phone, message, conv, db, tenant)
+        return
+
     if message not in ["part_manana", "part_manana_1", "part_manana_2", "part_tarde", "part_tarde_1", "part_tarde_2"]:
         await send_message(phone, "Por favor, elegí tocando uno de los botones de arriba.", tenant.wa_phone_number_id, tenant.wa_access_token)
         return
@@ -617,7 +623,10 @@ async def _handle_choosing_part_of_day(phone: str, message: str, conv: dict, db:
         filtered_slots = [t.isoformat() for t in tarde[len(tarde)//2:]]
 
     if not filtered_slots:
-        await send_message(phone, "No hay horarios en esa franja. Escribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
+        await send_message(phone, "No hay horarios disponibles en esa franja 😕\nElegí otra opción:", tenant.wa_phone_number_id, tenant.wa_access_token)
+        chosen_date_iso = conv["data"].get("chosen_date")
+        if chosen_date_iso:
+            await _handle_choosing_date(phone, f"date_{chosen_date_iso}", conv, db, tenant)
         return
 
     # Enviar lista de horarios para esa franja
@@ -665,6 +674,12 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
             await _handle_choosing_date(phone, f"date_{chosen_date_iso}", conv, db, tenant)
         return
 
+    # Si el usuario tocó otra fecha desde un mensaje anterior, volver a procesarla
+    if message.startswith("date_"):
+        update_conversation(db, tenant.id, phone, "CHOOSING_DATE", conv["data"])
+        await _handle_choosing_date(phone, message, conv, db, tenant)
+        return
+
     # Si el usuario tocó otra franja horaria desde un mensaje anterior, volver a procesarla
     part_of_day_options = ["part_manana", "part_manana_1", "part_manana_2", "part_tarde", "part_tarde_1", "part_tarde_2"]
     if message in part_of_day_options:
@@ -681,6 +696,16 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
             if message == f"time_{slot_iso}":
                 chosen_time = datetime.time.fromisoformat(slot_iso)
                 break
+
+    # Fallback: interpretar texto libre escrito por el usuario (ej: "11", "11:30", "11.30")
+    if chosen_time is None:
+        user_time = parse_user_time(message)
+        if user_time:
+            for slot_iso in slots_data:
+                t = datetime.time.fromisoformat(slot_iso)
+                if t.hour == user_time.hour and t.minute == user_time.minute:
+                    chosen_time = t
+                    break
 
     if chosen_time is None:
         await send_message(phone, "No entendí la hora 🤔\nPor favor, seleccioná una de las opciones del menú interactivo.", tenant.wa_phone_number_id, tenant.wa_access_token)
