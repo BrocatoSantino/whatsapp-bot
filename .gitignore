@@ -68,6 +68,7 @@ Thumbs.db
 
 # Configuración y skills locales de IA (Antigravity)
 .agents/
+.github/
 
 # Scripts locales de mantenimiento y seeding con credenciales / tokens
 add_tenant*.py

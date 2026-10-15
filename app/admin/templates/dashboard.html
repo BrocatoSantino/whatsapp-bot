@@ -171,10 +171,19 @@
         </div>
 
         <div style="margin-bottom: 2rem;">
-            <label class="form-label">Horario</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <label class="form-label" style="margin: 0;">Horario</label>
+                <button type="button" id="toggleCustomTimeBtn" onclick="toggleCustomTime()" style="background: none; border: none; color: var(--accent); font-size: 0.8rem; cursor: pointer; text-decoration: underline; display: none;">
+                    Ingresar manual
+                </button>
+            </div>
             <select name="time" id="manualTime" class="form-input" required disabled>
                 <option value="" disabled selected>Primero seleccione un servicio</option>
             </select>
+            <div id="customTimeContainer" style="display: none; margin-top: 0.5rem;">
+                <input type="time" id="customTimeInput" class="form-input" placeholder="HH:MM">
+                <span style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-top: 0.25rem;">Ingresá el horario exacto para este turno</span>
+            </div>
         </div>
         
         <button type="submit" id="manualSubmitBtn" disabled class="btn-full">
@@ -227,15 +236,50 @@
         document.body.style.overflow = '';
     }
 
+    function toggleCustomTime(forceManual = null) {
+        const container = document.getElementById('customTimeContainer');
+        const timeSelect = document.getElementById('manualTime');
+        const customInput = document.getElementById('customTimeInput');
+        const btn = document.getElementById('toggleCustomTimeBtn');
+        const submitBtn = document.getElementById('manualSubmitBtn');
+
+        const shouldBeManual = forceManual !== null ? forceManual : (container.style.display === 'none');
+
+        if (shouldBeManual) {
+            container.style.display = 'block';
+            timeSelect.removeAttribute('required');
+            timeSelect.style.display = 'none';
+            customInput.setAttribute('required', 'required');
+            customInput.name = 'time';
+            timeSelect.name = '';
+            btn.textContent = 'Ver lista de horarios';
+            if (customInput.value) submitBtn.disabled = false;
+            customInput.oninput = function() {
+                submitBtn.disabled = !this.value;
+            };
+        } else {
+            container.style.display = 'none';
+            timeSelect.style.display = 'block';
+            timeSelect.setAttribute('required', 'required');
+            timeSelect.name = 'time';
+            customInput.removeAttribute('required');
+            customInput.name = '';
+            btn.textContent = 'Ingresar manual';
+            submitBtn.disabled = !timeSelect.value;
+        }
+    }
+
     async function fetchAvailableSlots() {
         const serviceSelect = document.getElementById('manualService');
         const timeSelect = document.getElementById('manualTime');
         const submitBtn = document.getElementById('manualSubmitBtn');
+        const toggleBtn = document.getElementById('toggleCustomTimeBtn');
         const date = document.getElementById('manualDate').value;
         const serviceId = serviceSelect.value;
         
         if (!serviceId) return;
         
+        toggleBtn.style.display = 'inline-block';
         timeSelect.disabled = true;
         submitBtn.disabled = true;
         timeSelect.innerHTML = '<option value="" disabled selected>Cargando horarios...</option>';
@@ -246,8 +290,11 @@
             
             timeSelect.innerHTML = '';
             if (slots.length === 0) {
-                timeSelect.innerHTML = '<option value="" disabled selected>No hay horarios disponibles</option>';
+                timeSelect.innerHTML = '<option value="" disabled selected>No hay horarios automáticos</option>';
+                // Activar opción de ingreso manual automáticamente para no bloquear al usuario
+                toggleCustomTime(true);
             } else {
+                toggleCustomTime(false);
                 timeSelect.innerHTML = '<option value="" disabled selected>Seleccione un horario...</option>';
                 slots.forEach(slot => {
                     const opt = document.createElement('option');
@@ -257,17 +304,23 @@
                 });
                 timeSelect.disabled = false;
                 
-                timeSelect.addEventListener('change', function() {
-                    if (this.value) {
-                        submitBtn.disabled = false;
-                    }
-                });
+                timeSelect.onchange = function() {
+                    submitBtn.disabled = !this.value;
+                };
             }
         } catch (e) {
             console.error(e);
             timeSelect.innerHTML = '<option value="" disabled selected>Error al cargar horarios</option>';
+            toggleCustomTime(true);
         }
     }
+
+    // Prevenir doble envío en formulario de turno manual
+    document.getElementById('manualTurnoForm').addEventListener('submit', function() {
+        const submitBtn = document.getElementById('manualSubmitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Guardando...';
+    });
 </script>
 
 {% endblock %}

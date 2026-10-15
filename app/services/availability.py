@@ -30,7 +30,7 @@ def get_available_dates(db: Session, tenant_id: int, days_ahead: int = 7) -> lis
         is_working_day = current_date.weekday() in working_days
         has_override = day_str in overrides
         
-        if has_override:
+        if has_override and overrides[day_str]:
             day_is_open = len(overrides[day_str]) > 0
         else:
             day_is_open = is_working_day
@@ -50,7 +50,7 @@ def get_available_dates(db: Session, tenant_id: int, days_ahead: int = 7) -> lis
         
     return available_dates
 
-def get_available_slots(db: Session, target_date: date, service_id: int, tenant_id: int) -> list[time]:
+def get_available_slots(db: Session, target_date: date, service_id: int, tenant_id: int, include_past: bool = False) -> list[time]:
     """
     Obtiene los horarios disponibles para un servicio en una fecha específica para un tenant.
     Soporta turnos cortados, horarios de corrido, solapamiento real de intervalos
@@ -73,7 +73,7 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
     except (json.JSONDecodeError, TypeError):
         overrides = {}
         
-    if day_str in overrides:
+    if day_str in overrides and overrides[day_str]:
         business_shifts = overrides[day_str]
     else:
         try:
@@ -127,11 +127,11 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
         b_end = datetime.combine(target_date, block.end_time)
         busy_intervals.append((b_start, b_end))
     
-    available_slots = []
-    
     ar_tz = timezone(timedelta(hours=-3))
     now = datetime.now(ar_tz).replace(tzinfo=None)
     
+    candidate_starts = set()
+
     # Genera slots candidatos para cada turno
     for shift in business_shifts:
         try:
@@ -143,27 +143,36 @@ def get_available_slots(db: Session, target_date: date, service_id: int, tenant_
         start_datetime = datetime.combine(target_date, time(start_hour, start_minute))
         end_datetime = datetime.combine(target_date, time(end_hour, end_minute))
         
+        # 1. Grilla estándar desde el inicio de la franja
         current = start_datetime
-        
         while current + timedelta(minutes=duration) <= end_datetime:
-            slot_start = current
-            slot_end = current + timedelta(minutes=duration)
-
-            if target_date == now.date() and slot_start <= now:
-                current += timedelta(minutes=slot_duration_minutes)
-                continue
-                
-            # Dos intervalos [slot_start, slot_end) y [busy_start, busy_end) se solapan sii:
-            # slot_start < busy_end and busy_start < slot_end
-            is_free = True
-            for busy_start, busy_end in busy_intervals:
-                if slot_start < busy_end and busy_start < slot_end:
-                    is_free = False
-                    break
-                    
-            if is_free:
-                available_slots.append(slot_start.time())
-                
+            candidate_starts.add(current)
             current += timedelta(minutes=slot_duration_minutes)
+
+        # 2. Resincronización: al terminar un turno dentro de esta franja, habilitar el siguiente
+        for bs, be in busy_intervals:
+            if start_datetime <= be and be + timedelta(minutes=duration) <= end_datetime:
+                current = be
+                while current + timedelta(minutes=duration) <= end_datetime:
+                    candidate_starts.add(current)
+                    current += timedelta(minutes=slot_duration_minutes)
+
+    available_slots = []
+    for slot_start in sorted(candidate_starts):
+        slot_end = slot_start + timedelta(minutes=duration)
+
+        if not include_past and target_date == now.date() and slot_start <= now:
+            continue
+            
+        # Dos intervalos [slot_start, slot_end) y [busy_start, busy_end) se solapan sii:
+        # slot_start < busy_end and busy_start < slot_end
+        is_free = True
+        for busy_start, busy_end in busy_intervals:
+            if slot_start < busy_end and busy_start < slot_end:
+                is_free = False
+                break
+                
+        if is_free:
+            available_slots.append(slot_start.time())
             
     return available_slots

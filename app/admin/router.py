@@ -531,11 +531,13 @@ async def update_horarios(
         # Validar JSON básico
         json.loads(working_days)
         json.loads(business_shifts)
-        json.loads(day_overrides)
+        raw_overrides = json.loads(day_overrides)
+        # Limpiar overrides que tengan listas vacías para no deshabilitar el día por error
+        clean_overrides = {k: v for k, v in raw_overrides.items() if v and len(v) > 0}
         
         tenant.working_days = working_days
         tenant.business_shifts = business_shifts
-        tenant.day_overrides = day_overrides
+        tenant.day_overrides = json.dumps(clean_overrides)
         if slot_duration >= 5:
             tenant.slot_duration_minutes = slot_duration
             db.query(Service).filter(Service.tenant_id == tenant.id).update({"duration_minutes": slot_duration})
@@ -617,7 +619,7 @@ async def get_slots(
     
     try:
         target_date = datetime.strptime(date, "%Y-%m-%d").date()
-        slots = get_available_slots(db, target_date, service_id, tenant.id)
+        slots = get_available_slots(db, target_date, service_id, tenant.id, include_past=True)
         return [{"time": s.strftime("%H:%M")} for s in slots]
     except Exception as e:
         print(f"Error fetching slots: {e}")
@@ -646,7 +648,7 @@ async def add_manual_appointment(
         if not phone:
             phone = f"manual_{int(datetime.now().timestamp())}"
             
-        create_appointment(db, phone, client_name, service_id, target_date, target_time, tenant.id)
+        create_appointment(db, phone, client_name, service_id, target_date, target_time, tenant.id, allow_past=True)
     except Exception as e:
         db.rollback()
         print(f"Error creating manual appointment: {e}")

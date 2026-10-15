@@ -17,7 +17,17 @@ def get_or_create_client(db: Session, phone: str, name: str, tenant_id: int) -> 
         db.refresh(client)
     return client
 
-def create_appointment(db: Session, phone: str, name: str, service_id: int, apt_date: date, apt_time: time, tenant_id: int, status: str = "confirmed") -> Appointment | None:
+def create_appointment(
+    db: Session, 
+    phone: str, 
+    name: str, 
+    service_id: int, 
+    apt_date: date, 
+    apt_time: time, 
+    tenant_id: int, 
+    status: str = "confirmed",
+    allow_past: bool = False
+) -> Appointment | None:
     """Crea un nuevo turno para el cliente de un tenant específico."""
     service = db.query(Service).filter(Service.id == service_id, Service.tenant_id == tenant_id).first()
     if not service:
@@ -28,10 +38,29 @@ def create_appointment(db: Session, phone: str, name: str, service_id: int, apt_
     db.query(Tenant).filter(Tenant.id == tenant_id).with_for_update().first()
         
     # Doble chequeo de concurrencia: verificar si el turno sigue disponible
-    available_slots = get_available_slots(db, apt_date, service_id, tenant_id)
+    available_slots = get_available_slots(db, apt_date, service_id, tenant_id, include_past=allow_past)
     if apt_time not in available_slots:
         db.rollback() # Liberar el lock
         return None
+        
+    # Verificación estricta de solapamiento para evitar cualquier doble reserva concurrente
+    duration = service.duration_minutes or 30
+    apt_start = datetime.combine(apt_date, apt_time)
+    apt_end = apt_start + timedelta(minutes=duration)
+    
+    existing_conflicts = db.query(Appointment).filter(
+        Appointment.tenant_id == tenant_id,
+        Appointment.date == apt_date,
+        Appointment.status.in_(['confirmed', 'pending'])
+    ).all()
+    
+    for existing in existing_conflicts:
+        e_dur = existing.service.duration_minutes if existing.service else 30
+        e_start = datetime.combine(existing.date, existing.time)
+        e_end = e_start + timedelta(minutes=e_dur)
+        if apt_start < e_end and e_start < apt_end:
+            db.rollback()
+            return None
         
     client = get_or_create_client(db, phone, name, tenant_id)
     

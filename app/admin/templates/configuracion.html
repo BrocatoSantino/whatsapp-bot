@@ -244,10 +244,12 @@
     }
     
     function clearOverrideDay() {
-        const dayStr = document.getElementById('override_day_selector').value;
+        const selector = document.getElementById('override_day_selector');
+        const dayStr = selector.value;
         if(dayStr) {
             delete dayOverrides[dayStr];
-            loadDayOverrides();
+            selector.value = '';
+            document.getElementById('overrideShiftsContainer').style.display = 'none';
         }
     }
 
@@ -263,7 +265,11 @@
                 shifts.push({ start, end });
             }
         });
-        dayOverrides[dayStr] = shifts;
+        if (shifts.length > 0) {
+            dayOverrides[dayStr] = shifts;
+        } else {
+            delete dayOverrides[dayStr];
+        }
     }
 
     function submitHorarios() {
