@@ -10,6 +10,7 @@ from app.services.appointment import get_appointments_by_date, cancel_appointmen
 
 router = APIRouter()
 import os
+import re
 import secrets
 current_dir = os.path.dirname(os.path.realpath(__file__))
 templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
