@@ -13,7 +13,7 @@ from app.services.appointment import (
     get_all_services
 )
 from app.services.availability import get_available_dates, get_available_slots
-from app.models import Tenant, ConversationState
+from app.models import Tenant, ConversationState, Appointment
 from app.database import SessionLocal
 
 ar_tz = datetime.timezone(datetime.timedelta(hours=-3))
@@ -201,29 +201,35 @@ async def handle_message(phone: str, name: str, message: str, message_id: str, d
         if msg.startswith("cancel_apt_"):
             try:
                 apt_id = int(msg.split("_")[2])
+                apt = db.query(Appointment).filter(Appointment.id == apt_id, Appointment.tenant_id == tenant.id).first()
                 success = cancel_appointment(db, apt_id, phone, tenant.id)
                 if success:
                     await send_message(phone, "❌ Turno cancelado correctamente. ¡Gracias por avisar!", tenant.wa_phone_number_id, tenant.wa_access_token)
+                    if apt:
+                        await _notify_owner_cancellation(tenant, apt, name)
                 else:
                     await send_message(phone, "No pudimos cancelar el turno 😕 Escribí *menu*.", tenant.wa_phone_number_id, tenant.wa_access_token)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Error procesando cancel_apt_: {e}")
             reset_conversation(db, tenant.id, phone)
             return
 
         if msg.startswith("reschedule_apt_"):
             try:
                 apt_id = int(msg.split("_")[2])
+                apt = db.query(Appointment).filter(Appointment.id == apt_id, Appointment.tenant_id == tenant.id).first()
                 success = cancel_appointment(db, apt_id, phone, tenant.id)
                 if success:
                     await send_message(phone, "🔄 Ok, cancelamos el de mañana. Vamos a reprogramarlo:", tenant.wa_phone_number_id, tenant.wa_access_token)
+                    if apt:
+                        await _notify_owner_cancellation(tenant, apt, name)
                     update_conversation(db, tenant.id, phone, "MENU")
                     await _handle_menu(phone, "sacar_turno", get_conversation(db, tenant.id, phone), db, tenant)
                     return
                 else:
                     await send_message(phone, "No pudimos reprogramar el turno 😕 Escribí *menu*.", tenant.wa_phone_number_id, tenant.wa_access_token)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Error procesando reschedule_apt_: {e}")
             reset_conversation(db, tenant.id, phone)
             return
 
@@ -282,8 +288,9 @@ async def _handle_idle(phone: str, name: str, db: Session, tenant: Tenant):
     display_phone = tenant.owner_phone
     if display_phone and display_phone.startswith("549"):
         display_phone = display_phone[3:]
-    contact_msg = f"\n📞 Si necesitás contactar a un humano, podés hablar al: {display_phone}\n" if display_phone else ""
-    body = (f"💈 {greeting} Soy el asistente de *{tenant.name}*{contact_msg}\n"
+    address_line = f"\n📍 {tenant.address}" if getattr(tenant, "address", None) else ""
+    contact_msg = f"\n📞 Si necesitás contactar a un humano, podés hablar al: {display_phone}" if display_phone else ""
+    body = (f"💈 {greeting} Soy el asistente de *{tenant.name}*{address_line}{contact_msg}\n\n"
             f"¿Qué necesitás?")
     buttons = [
         {"id": "sacar_turno", "title": "📅 Sacar turno"},
@@ -721,10 +728,11 @@ async def _handle_choosing_time(phone: str, name: str, message: str, conv: dict,
 
     if appointment:
         price_line = f"\n💰 {service_price}" if service_price else ""
+        address_line = f"\n📍 {tenant.address}" if getattr(tenant, "address", None) else ""
         msg = (f"✅ *¡Listo, turno confirmado!*\n\n"
                f"📅 {format_date(chosen_date)}\n"
                f"🕐 {format_time(chosen_time)}\n"
-               f"✂️ {service_name}{price_line}\n\n"
+               f"✂️ {service_name}{price_line}{address_line}\n\n"
                f"Te esperamos en *{tenant.name}* 💈")
 
         buttons = [
@@ -815,6 +823,7 @@ async def _handle_cancel(phone: str, message: str, conv: dict, db: Session, tena
         await send_message(phone, "No entendí 🤔 Elegí un turno de la lista o escribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
         return
 
+    apt = db.query(Appointment).filter(Appointment.id == apt_id, Appointment.tenant_id == tenant.id).first()
     success = cancel_appointment(db, apt_id, phone, tenant.id)
 
     if success:
@@ -823,10 +832,54 @@ async def _handle_cancel(phone: str, message: str, conv: dict, db: Session, tena
             {"id": "mis_turnos", "title": "📋 Mis turnos"},
         ]
         await send_reply_buttons(phone, "❌ Turno cancelado.\n\n¿Querés hacer algo más?", buttons, tenant.wa_phone_number_id, tenant.wa_access_token)
+        if apt:
+            await _notify_owner_cancellation(tenant, apt)
     else:
         await send_message(phone, "No se pudo cancelar el turno 😕\nEscribí *menu* para volver.", tenant.wa_phone_number_id, tenant.wa_access_token)
 
     reset_conversation(db, tenant.id, phone)
+
+# ---------------------------------------------------------------------------
+# CANCELLATION NOTIFICATION → Avisar al dueño cuando un cliente cancela
+# ---------------------------------------------------------------------------
+
+async def _notify_owner_cancellation(tenant: Tenant, appointment: Appointment, client_name: str | None = None):
+    """Notifica al barbero/dueño que un cliente canceló su turno mediante la plantilla turno_cancelado."""
+    owner_phone = tenant.owner_phone or os.getenv("OWNER_PHONE")
+    if not owner_phone:
+        return
+
+    try:
+        display_name = client_name
+        if not display_name and appointment.client and appointment.client.name:
+            display_name = appointment.client.name
+        if not display_name:
+            display_name = "Un cliente"
+
+        service_name = appointment.service.name if appointment.service else "Corte"
+        components = [
+            {
+                "type": "body",
+                "parameters": [
+                    {"type": "text", "text": display_name},
+                    {"type": "text", "text": format_date(appointment.date)},
+                    {"type": "text", "text": format_time(appointment.time)},
+                    {"type": "text", "text": service_name}
+                ]
+            }
+        ]
+        logger.info(f"Enviando plantilla turno_cancelado a {owner_phone} para turno #{appointment.id}")
+        await send_template_message(
+            phone=owner_phone,
+            template_name="turno_cancelado",
+            language_code="es_AR",
+            components=components,
+            phone_number_id=tenant.wa_phone_number_id,
+            access_token=tenant.wa_access_token
+        )
+        logger.info(f"Plantilla turno_cancelado enviada correctamente a {owner_phone}")
+    except Exception as e:
+        logger.error(f"No se pudo notificar al dueño de la cancelación: {e}")
 
 # ---------------------------------------------------------------------------
 # HUMAN HANDOFF → Avisar al dueño

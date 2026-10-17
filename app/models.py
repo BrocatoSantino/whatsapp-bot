@@ -16,6 +16,7 @@ class Tenant(Base):
     wa_phone_number_id = Column(String, unique=True, index=True, nullable=False)
     wa_access_token = Column(String, nullable=False)
     owner_phone = Column(String, nullable=True)
+    address = Column(String, nullable=True)
     
     # Configuración de horarios por empresa (JSON guardado como String)
     working_days = Column(String, default='[0, 1, 2, 3, 4, 5]')  # Lunes a Sábado por defecto

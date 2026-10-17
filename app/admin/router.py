@@ -130,6 +130,7 @@ async def logout(request: Request):
     return RedirectResponse(url="/admin/login", status_code=303)
 
 @router.get("/admin/cambiar-password", response_class=HTMLResponse)
+@router.get("/admin/perfil", response_class=HTMLResponse)
 async def cambiar_password_get(request: Request, tenant: Tenant | None = Depends(get_admin_session), db: Session = Depends(get_db)):
     if not tenant:
         return RedirectResponse(url="/admin/login", status_code=303)
@@ -138,8 +139,46 @@ async def cambiar_password_get(request: Request, tenant: Tenant | None = Depends
         context={
             "business_name": tenant.name,
             "current_username": tenant.username,
+            "current_address": tenant.address or "",
+            "owner_phone": tenant.owner_phone or "",
             "error": False,
             "success": False
+        }
+    )
+
+@router.post("/admin/perfil/datos", response_class=HTMLResponse)
+async def perfil_datos_post(
+    request: Request,
+    name: str = Form(...),
+    address: str = Form(None),
+    owner_phone: str = Form(None),
+    tenant: Tenant | None = Depends(get_admin_session),
+    db: Session = Depends(get_db),
+    _csrf: None = Depends(verify_csrf)
+):
+    if not tenant:
+        return RedirectResponse(url="/admin/login", status_code=303)
+
+    tenant.name = name.strip()
+    tenant.address = address.strip() if address and address.strip() else None
+
+    clean_phone = owner_phone.strip() if owner_phone and owner_phone.strip() else None
+    if clean_phone:
+        clean_phone = re.sub(r'[\s\-\+\(\)]', '', clean_phone)
+    tenant.owner_phone = clean_phone
+
+    db.commit()
+
+    return templates.TemplateResponse(
+        request=request, name="cambiar_password.html",
+        context={
+            "business_name": tenant.name,
+            "current_username": tenant.username,
+            "current_address": tenant.address or "",
+            "owner_phone": tenant.owner_phone or "",
+            "error": False,
+            "success": True,
+            "success_msg": "¡Datos del negocio actualizados correctamente!"
         }
     )
 
@@ -164,6 +203,8 @@ async def cambiar_password_post(
             context={
                 "business_name": tenant.name,
                 "current_username": tenant.username,
+                "current_address": tenant.address or "",
+                "owner_phone": tenant.owner_phone or "",
                 "error": True,
                 "error_msg": "La contraseña actual es incorrecta.",
                 "success": False
@@ -179,6 +220,8 @@ async def cambiar_password_post(
                 context={
                     "business_name": tenant.name,
                     "current_username": tenant.username,
+                    "current_address": tenant.address or "",
+                    "owner_phone": tenant.owner_phone or "",
                     "error": True,
                     "error_msg": "Ese nombre de usuario ya está en uso.",
                     "success": False
@@ -194,6 +237,8 @@ async def cambiar_password_post(
                 context={
                     "business_name": tenant.name,
                     "current_username": tenant.username,
+                    "current_address": tenant.address or "",
+                    "owner_phone": tenant.owner_phone or "",
                     "error": True,
                     "error_msg": "Las contraseñas nuevas no coinciden.",
                     "success": False
@@ -205,6 +250,8 @@ async def cambiar_password_post(
                 context={
                     "business_name": tenant.name,
                     "current_username": tenant.username,
+                    "current_address": tenant.address or "",
+                    "owner_phone": tenant.owner_phone or "",
                     "error": True,
                     "error_msg": "La contraseña debe tener al menos 4 caracteres.",
                     "success": False
@@ -219,6 +266,8 @@ async def cambiar_password_post(
         context={
             "business_name": tenant.name,
             "current_username": tenant.username,
+            "current_address": tenant.address or "",
+            "owner_phone": tenant.owner_phone or "",
             "error": False,
             "success": True,
             "success_msg": "¡Credenciales actualizadas correctamente!"
